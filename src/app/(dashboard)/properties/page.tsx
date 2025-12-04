@@ -1,212 +1,118 @@
-"use client";
-
-import React, { useState } from "react";
-import { 
-  Plus, Search, Filter, MapPin, BedDouble, Bath, Maximize, 
-  MoreVertical, Home, Building2, Warehouse, Globe 
-} from "lucide-react";
-import { toast } from "sonner"; // Pour les notifications
-import { AddPropertyWizard } from "@/components/properties/AddPropertyWizard";
+import React from "react";
+import Link from "next/link";
+import { Plus, Search, Filter, Building2, MapPin, Home } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import Input from "@/components/ui/Input";
-import { Modal } from "@/components/ui/Modal";
-import { EmptyState } from "@/components/ui/EmptyState"; 
-import { formatCurrency } from "@/lib/utils"; 
-import { Map } from "lucide-react"; 
-// --- MOCK DATA ---
-const properties = [
-  {
-    id: 1,
-    title: "Appartement T3 - Centre Ville",
-    address: "12 Rue de la République, Dakar",
-    price: 450000,
-    currency: "XOF",
-    locale: "fr-SN",
-    status: "Loué",
-    type: "Appartement",
-    image: "bg-blue-100", 
-    icon: Building2,
-    specs: { beds: 2, baths: 1, area: 85 },
-    tenant: "Moussa Diop"
-  },
-  {
-    id: 2,
-    title: "Penthouse Champs-Élysées",
-    address: "Paris 8ème, France",
-    price: 4500, 
-    currency: "EUR",
-    locale: "fr-FR",
-    status: "Vacant",
-    type: "Appartement",
-    image: "bg-indigo-100",
-    icon: Building2,
-    specs: { beds: 3, baths: 2, area: 120 },
-    tenant: null
-  },
-  {
-    id: 3,
-    title: "Villa Corniche Ouest",
-    address: "Corniche Ouest, Dakar",
-    price: 1200000,
-    currency: "XOF",
-    locale: "fr-SN",
-    status: "Loué",
-    type: "Villa",
-    image: "bg-orange-100",
-    icon: Home,
-    specs: { beds: 4, baths: 3, area: 250 },
-    tenant: "Fatou Sow"
-  },
-  {
-    id: 4,
-    title: "Loft Manhattan",
-    address: "SoHo, New York, USA",
-    price: 6000,
-    currency: "USD",
-    locale: "en-US",
-    status: "Travaux",
-    type: "Loft",
-    image: "bg-slate-800",
-    icon: Warehouse,
-    specs: { beds: 1, baths: 1, area: 150 },
-    tenant: null
-  }
-];
+import { getProperties } from "@/app/data/properties"; // Vrai Loader BDD
+import { formatCurrency } from "@/lib/utils";
 
-export default function PropertiesPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const TYPE_LABELS: Record<string, string> = {
+  APARTMENT: "Appartement", HOUSE: "Maison", STUDIO: "Studio",
+  OFFICE: "Bureau", RETAIL: "Commerce", WAREHOUSE: "Entrepôt",
+  INDUSTRIAL: "Industriel", LAND: "Terrain", PARKING: "Parking", BUILDING: "Immeuble", ROOM: "Chambre"
+};
 
-  // Fonction de soumission du formulaire (Simulation)
-  const handleAddProperty = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Ici, tu ajouterais la logique pour sauvegarder en base de données
-    
-    setIsModalOpen(false); // Fermer le modal
-    toast.success("Bien immobilier ajouté !", {
-      description: "Le nouveau bien a été enregistré avec succès."
-    });
-  };
-
-  function toggleView(arg0: string): void {
-    throw new Error("Function not implemented.");
-  }
+export default async function PropertiesPage() {
+  // 1. Chargement des vraies données (Côté Serveur)
+  const properties = await getProperties();
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-8 pb-10 animate-in fade-in duration-500">
       
-      {/* --- Actions Header --- */}
+      {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Mes Biens</h1>
-          <p className="text-slate-500">Gestion internationale de votre parc.</p>
+           <h1 className="text-2xl font-bold text-slate-900">Mes Biens</h1>
+           <p className="text-slate-500">Gérez votre inventaire ({properties.length} biens).</p>
         </div>
-        <Button 
-          onClick={() => setIsModalOpen(true)} 
-          className="bg-orange-500 hover:bg-orange-600 text-white"
-        >
-          <Plus size={18} className="mr-2" />
-          Ajouter un bien
-        </Button>
+        <Link href="/properties/new">
+           <Button className="bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-all">
+             <Plus size={18} className="mr-2" /> Ajouter un bien
+           </Button>
+        </Link>
       </div>
 
-      {/* --- Filtres & Recherche --- */}
-      <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <Input placeholder="Rechercher par ville, pays..." className="pl-10" />
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Globe size={16} className="mr-2" /> Devises
-          </Button>
-          <Button variant="outline">
-            <Filter size={16} className="mr-2" /> Filtres
-          </Button>
-          <Button variant="outline" onClick={() => toggleView('map')}>
-            <Map size={16} className="mr-2" /> Vue Carte
-          </Button>
-        </div>
+      {/* FILTRES (Visuels pour l'instant) */}
+      <div className="flex flex-col sm:flex-row gap-4">
+         <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18}/>
+            <input 
+              type="text" 
+              placeholder="Rechercher un bien..." 
+              className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm"
+            />
+         </div>
+         <Button variant="outline" className="bg-white border-slate-200 text-slate-600">
+            <Filter size={16} className="mr-2"/> Filtres
+         </Button>
       </div>
 
-      {/* --- Contenu Principal (Empty State ou Grille) --- */}
+      {/* LISTE DES BIENS */}
       {properties.length === 0 ? (
-        <EmptyState 
-          icon={Building2} 
-          title="Aucun bien immobilier" 
-          description="Commencez par ajouter votre premier bien pour gérer vos locations."
-          actionLabel="Ajouter un bien"
-          onAction={() => setIsModalOpen(true)}
-        />
+         <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300 flex flex-col items-center justify-center">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                <Home size={32}/>
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">Aucun bien pour le moment</h3>
+            <p className="text-slate-500 mb-6 text-sm max-w-xs mx-auto">Commencez par ajouter votre premier appartement, maison ou local commercial.</p>
+            <Link href="/properties/new"><Button>Créer mon premier bien</Button></Link>
+         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {properties.map((property) => {
-            const Icon = property.icon;
-            let badgeVariant: "success" | "default" | "warning" | "danger" = "default";
-            if (property.status === "Loué") badgeVariant = "success";
-            if (property.status === "Travaux") badgeVariant = "warning";
-            if (property.status === "Vacant") badgeVariant = "danger"; 
-
-            return (
-              <Card key={property.id} className="group hover:shadow-lg hover:border-blue-200 transition-all overflow-hidden cursor-pointer">
-                {/* Image Header */}
-                <div className={`h-48 w-full ${property.image} relative flex items-center justify-center group-hover:scale-105 transition-transform duration-500`}>
-                  <Icon size={48} className="text-white/50" />
-                  <div className="absolute top-4 right-4">
-                    <Badge variant={badgeVariant}>{property.status}</Badge>
-                  </div>
-                </div>
-
-                <CardContent className="p-5">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">{property.type}</p>
-                      <h3 className="font-bold text-lg text-slate-900 line-clamp-1">{property.title}</h3>
-                    </div>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <MoreVertical size={18} />
-                    </Button>
-                  </div>
-
-                  <div className="flex items-center text-slate-500 text-sm mb-4">
-                    <MapPin size={14} className="mr-1 text-slate-400" />
-                    <span className="truncate">{property.address}</span>
-                  </div>
-
-                  <div className="flex items-center gap-4 py-4 border-t border-slate-100 mb-4">
-                    <div className="flex items-center gap-1.5 text-slate-600 text-sm"><BedDouble size={16} className="text-slate-400" /> {property.specs.beds}</div>
-                    <div className="flex items-center gap-1.5 text-slate-600 text-sm"><Bath size={16} className="text-slate-400" /> {property.specs.baths}</div>
-                    <div className="flex items-center gap-1.5 text-slate-600 text-sm"><Maximize size={16} className="text-slate-400" /> {property.specs.area} m²</div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <div>
-                      <p className="text-sm text-slate-400">Loyer mensuel</p>
-                      <p className="text-lg font-bold text-slate-900">
-                        {formatCurrency(property.price, property.currency, property.locale)}
-                      </p>
-                    </div>
-                    {property.tenant ? (
-                      <div className="flex items-center gap-2 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-700">
-                          {property.tenant.charAt(0)}
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {properties.map((property) => (
+               <Link key={property.id} href={`/properties/${property.id}`} className="block h-full">
+                  <Card className="group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden border-slate-200 h-full flex flex-col">
+                     
+                     {/* Image */}
+                     <div className="h-48 bg-slate-100 relative flex items-center justify-center overflow-hidden">
+                        {property.coverImage ? (
+                           <img src={property.coverImage} alt={property.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                        ) : (
+                           <Building2 size={48} className="text-slate-300"/>
+                        )}
+                        
+                        {/* Badges */}
+                        <div className="absolute top-3 left-3">
+                           <Badge className="bg-white/90 backdrop-blur text-slate-800 shadow-sm border-none font-bold">
+                              {TYPE_LABELS[property.type] || property.type}
+                           </Badge>
                         </div>
-                        <span className="text-xs font-medium text-slate-600 max-w-20 truncate">{property.tenant}</span>
-                      </div>
-                    ) : (
-                      <Badge variant="secondary" className="text-xs">Disponible</Badge>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                        <div className="absolute top-3 right-3">
+                            <Badge className={`border-none text-white shadow-sm ${property.status === 'AVAILABLE' ? 'bg-green-500' : 'bg-blue-500'}`}>
+                               {property.status === 'AVAILABLE' ? 'Vacant' : 'Loué'}
+                            </Badge>
+                        </div>
+                     </div>
+                     
+                     {/* Contenu */}
+                     <CardContent className="p-5 flex-1 flex flex-col">
+                        <div className="mb-4">
+                           <h3 className="font-bold text-lg text-slate-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                              {property.title}
+                           </h3>
+                           <p className="text-slate-500 text-sm flex items-center gap-1 mt-1 truncate">
+                              <MapPin size={14} className="text-orange-500 shrink-0" /> {property.address}
+                           </p>
+                        </div>
+                        
+                        <div className="mt-auto flex justify-between items-end pt-4 border-t border-slate-100">
+                           <div>
+                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Loyer</span>
+                              <span className="font-extrabold text-slate-900 text-xl">
+                                 {formatCurrency(property.price)}
+                              </span>
+                           </div>
+                           <span className={`text-xs font-medium px-2.5 py-1 rounded-md ${property.tenants.length > 0 ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>
+                              {property.tenants.length > 0 ? `${property.tenants.length} Locataire(s)` : '0 Locataire'}
+                           </span>
+                        </div>
+                     </CardContent>
+                  </Card>
+               </Link>
+            ))}
+         </div>
       )}
-
-      {/* --- Modal d'ajout --- */}
-      <AddPropertyWizard isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }

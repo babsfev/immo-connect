@@ -1,113 +1,139 @@
-// src/lib/immo-connect-models.ts
-export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  role: 'owner' | 'tenant' | 'manager';
-}
+// --- TYPES GLOBAUX ---
+
+export type Currency = "XOF" | "EUR" | "USD";
+export type Locale = "fr-SN" | "fr-FR" | "en-US";
+
+// --- IMMOBILIER (Stock) ---
+export type PropertyStatus = "Vacant" | "Loué" | "Travaux" | "Vente";
+export type PropertyType = "Appartement" | "Villa" | "Studio" | "Bureau" | "Local" | "Terrain";
 
 export interface Property {
-  id: string;
+  id: string | number;
   title: string;
-  description: string;
-  type: 'apartment' | 'house' | 'studio' | 'villa';
-  price: number;
-  city: string;
   address: string;
-  status: 'available' | 'occupied' | 'maintenance';
-  ownerId: string;
+  price: number;
+  currency: Currency;
+  locale: Locale;
+  status: PropertyStatus;
+  type: PropertyType;
+  image?: string;
+  specs: {
+    beds?: number;
+    baths?: number;
+    area: number;
+    built?: number; // Année construction
+  };
+  features?: string[];
+  tenantId?: string | number;
+  financials?: {
+    yield: number; // Rentabilité %
+    occupancyRate: number; // Taux occupation %
+  };
 }
+
+// --- LOCATAIRES (Clients) ---
+export type TenantStatus = "À jour" | "En retard" | "En attente" | "Contentieux";
 
 export interface Tenant {
-  id: string;
-  firstName: string;
-  lastName: string;
+  id: string | number;
+  name: string;
   email: string;
   phone: string;
-  propertyId: string;
-  isActive: boolean;
+  property: string; // Nom du bien loué
+  status: TenantStatus;
+  rentAmount: number;
+  deposit?: number;
+  leaseStart?: string;
+  leaseEnd: string;
+  riskScore?: number; // Score IA (0-100)
+  paymentMethod?: string;
+  avatar?: string; // Classe CSS couleur (ex: bg-blue-100)
 }
 
-export interface Lease {
-  id: string;
-  propertyId: string;
-  tenantId: string;
-  startDate: string;
-  endDate: string;
-  rent: number;
-  status: 'active' | 'expired' | 'terminated';
-}
+// --- FINANCE (Cashflow) ---
+export type PaymentStatus = "Payé" | "Impayé" | "Retard" | "En attente";
+export type ExpenseCategory = "Maintenance" | "Énergie" | "Impôts" | "Gestion" | "Autre";
 
-export interface Payment {
-  id: string;
-  leaseId: string;
-  tenantId: string;
-  propertyId: string;
+export interface Transaction {
+  id: string | number;
+  date: string;
   amount: number;
-  dueDate: string;
-  status: 'paid' | 'overdue' | 'pending';
-  paidDate?: string;
+  status: PaymentStatus;
+  type: "income" | "expense";
+  category?: ExpenseCategory;
+  label: string; // Description (ex: Loyer Nov)
+  relatedTo?: string; // Nom du locataire ou du bien
+  recoverable?: boolean; // Charge récupérable ?
 }
 
-export const UserMock: User[] = [
-  {
-    id: '1',
-    firstName: 'Marie',
-    lastName: 'Lambert',
-    email: 'marie.lambert@example.com',
-    phone: '+221 77 123 45 67',
-    role: 'owner'
-  }
-];
+// --- CRM (Candidatures) ---
+export type ApplicationStatus = "Nouveau" | "Visite" | "Analyse" | "Offre" | "Signé" | "Rejeté";
 
-export const PropertyMock: Property[] = [
-  {
-    id: '1',
-    title: 'Villa Almadies',
-    description: 'Belle villa avec vue sur mer',
-    type: 'villa',
-    price: 450000,
-    city: 'Dakar',
-    address: 'Almadies, Dakar',
-    status: 'occupied',
-    ownerId: '1'
-  },
-  {
-    id: '2',
-    title: 'Appartement Sacré-Coeur',
-    description: 'Appartement moderne 3 pièces',
-    type: 'apartment',
-    price: 250000,
-    city: 'Dakar',
-    address: 'Sacré-Coeur, Dakar',
-    status: 'available',
-    ownerId: '1'
-  }
-];
+export interface Application {
+  id: string | number;
+  name: string;
+  job: string;
+  income: number;
+  property: string;
+  date: string;
+  score: number; // Scoring IA
+  status: ApplicationStatus;
+  tags?: string[];
+  aiInsight?: string;
+  documents?: { name: string; valid: boolean }[];
+}
 
-export const TenantMock: Tenant[] = [
-  {
-    id: '1',
-    firstName: 'Abdoulaye',
-    lastName: 'Diop',
-    email: 'abdoulaye.diop@example.com',
-    phone: '+221 76 543 21 00',
-    propertyId: '1',
-    isActive: true
-  }
-];
+// --- MAINTENANCE (Tickets) ---
+export type TicketPriority = "Faible" | "Moyenne" | "Urgente" | "Critique";
+export type TicketStatus = "todo" | "progress" | "done";
 
-export const PaymentMock: Payment[] = [
-  {
-    id: '1',
-    leaseId: '1',
-    tenantId: '1',
-    propertyId: '1',
-    amount: 450000,
-    dueDate: '2024-01-05',
-    status: 'paid',
-    paidDate: '2024-01-01'
-  }
-];
+export interface Ticket {
+  id: string | number;
+  title: string;
+  property: string;
+  tenant?: string;
+  date: string;
+  priority: TicketPriority;
+  status: TicketStatus;
+  provider?: string; // Prestataire assigné
+  aiCostEstimation?: number;
+  sla?: string; // Temps restant
+}
+// --- COLOCATION & CO-LIVING ---
+
+export interface RoomAmenities {
+  hasBalcony: boolean;
+  hasPrivateBath: boolean;
+  hasAC: boolean; // Climatisation
+  furnished: boolean; // Meublé
+  size: number; // m²
+}
+
+export interface LifestyleProfile {
+  smoker: boolean;
+  petsAllowed: boolean;
+  genderPreference: "mixed" | "female_only" | "male_only";
+  occupation: "student" | "professional" | "any";
+}
+
+export interface ColocListing {
+  id: string;
+  propertyId: string; // Lien vers le bien parent
+  pricePerRoom: number;
+  availableRooms: number;
+  totalRooms: number;
+  
+  // Les détails qui tuent
+  amenities: RoomAmenities;
+  lifestyle: LifestyleProfile;
+  
+  // Gestion des charges (Spécifique Afrique)
+  utilities: {
+    woyofal: "included" | "shared"; // Électricité
+    water: "included" | "shared";
+    internet: "included" | "shared";
+    cleaning: "included" | "shared"; // Femme de ménage
+  };
+
+  images: string[]; // Photos spécifiques de la chambre
+}

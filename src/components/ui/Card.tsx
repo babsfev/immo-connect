@@ -17,7 +17,7 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
       {...props}
     >
       {/* Petit éclat lumineux en haut à droite (Esthétique) */}
-      <div className="absolute top-0 right-0 -mt-4 -mr-4 h-16 w-16 rounded-full bg-gradient-to-br from-blue-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl pointer-events-none" />
+      <div className="absolute top-0 right-0 -mt-4 -mr-4 h-16 w-16 rounded-full bg-linear-to-br from-blue-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl pointer-events-none" />
       {props.children}
     </div>
   )

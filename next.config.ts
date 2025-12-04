@@ -1,9 +1,37 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    // @ts-expect-error - Cette option existe bien mais les types TS ne sont pas à jour
-    allowedDevOrigins: ["localhost:3000", "192.168.1.3:3000"],
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'plus.unsplash.com' },
+    ],
+  },
+  // SÉCURITÉ RENFORCÉE
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY', // Empêche d'être mis dans une iframe
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff', // Empêche le navigateur de deviner les types de fichiers
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin', // Protège la vie privée des liens
+          },
+          {
+             key: 'Strict-Transport-Security',
+             value: 'max-age=63072000; includeSubDomains; preload' // Force le HTTPS
+          }
+        ],
+      },
+    ];
   },
 };
 

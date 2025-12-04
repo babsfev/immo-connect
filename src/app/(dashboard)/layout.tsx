@@ -1,28 +1,39 @@
 import React from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
+import { MobileNav } from "@/components/layout/MobileNav";
+import { getUserMe } from "@/app/actions/user"; // <-- Import
+import { PhoneModal } from "@/components/auth/PhoneModal"; // <-- Import
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Vérification Serveur à chaque chargement de page
+  const user = await getUserMe();
+  const showPhoneModal = user ? !user.phone : false; // Si user existe MAIS pas de téléphone
+
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-blue-100 selection:text-blue-800">
-      {/* Sidebar fixe à gauche (visible sur grand écran) */}
+    <div className="flex min-h-screen w-full bg-[#F8FAFC]">
       <Sidebar />
 
-      <div className="flex flex-col min-h-screen">
-        {/* Header fixe en haut */}
-        <Header />
+      <div className="flex flex-1 flex-col lg:ml-72 w-full min-w-0">
+        <div className="hidden lg:block sticky top-0 z-40">
+           <Header />
+        </div>
+        {/* ... Header Mobile ... */}
         
-        {/* Le contenu des pages (Dashboard, Properties, Tenants...) s'affiche ici via 'children' */}
-        <main className="flex-1 p-4 sm:p-6 lg:ml-64 overflow-x-hidden">
-          <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {children}
-          </div>
+        <main className="...">
+          {children}
         </main>
       </div>
+
+      <MobileNav />
+
+      {/* LE FILET DE SÉCURITÉ */}
+      <PhoneModal isOpen={showPhoneModal} />
+      
     </div>
   );
 }

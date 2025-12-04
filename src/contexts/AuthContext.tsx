@@ -1,29 +1,35 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect } from "react";
 
-interface AuthContextType {
-  user: any;
-  login: () => void;
-  logout: () => void;
-  isLoading: boolean;
+import React, { createContext, useContext } from "react";
+
+// Type partagé pour l'utilisateur connecté
+export interface UserProfile {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  role: string;
+  phone?: string | null;
+  isVerified?: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+interface AuthContextType {
+  user: UserProfile | null;
+}
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+});
 
-  useEffect(() => {
-    // Simulation de vérification de session
-    setTimeout(() => setIsLoading(false), 1000);
-  }, []);
-
-  const login = () => setUser({ name: "Jean Dupont", email: "jean@test.com" });
-  const logout = () => setUser(null);
-
+export function AuthProvider({ 
+  children, 
+  user // <-- On reçoit l'utilisateur injecté par le Serveur (layout.tsx)
+}: { 
+  children: React.ReactNode, 
+  user: UserProfile | null 
+}) {
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user }}>
       {children}
     </AuthContext.Provider>
   );

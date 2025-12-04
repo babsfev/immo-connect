@@ -1,223 +1,193 @@
-import React from "react";
+"use client"; // Indispensable pour le menu mobile
+
+import React, { useState } from "react";
 import Link from "next/link";
 import { 
-  Building2, 
-  CheckCircle2, 
-  ArrowRight, 
-  BarChart3, 
-  ShieldCheck, 
-  Users, 
-  Zap, 
-  LayoutDashboard 
+  ArrowRight, Check, Shield, Zap, Globe, 
+  Smartphone, LayoutDashboard, Menu, X 
 } from "lucide-react";
-
 import Button from "@/components/ui/Button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import Input from "@/components/ui/Input";
+import { Logo } from "@/components/ui/Logo";
+import { CURRENT_YEAR } from "@/lib/utils";
 
 export default function LandingPage() {
-  return (
-    <main className="min-h-screen bg-white font-sans text-slate-600 selection:bg-blue-100 selection:text-blue-700">
-      
-      {/* 1. HERO SECTION */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-        {/* Background Elements */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full z-0 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-100 blur-3xl opacity-60"></div>
-          <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[30%] rounded-full bg-orange-100 blur-3xl opacity-40"></div>
-        </div>
+  // État pour gérer l'ouverture du menu mobile
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-        <div className="container relative z-10 mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-sm font-medium mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <span className="flex h-2 w-2 rounded-full bg-blue-600"></span>
-            La solution n°1 pour les gestionnaires
+  return (
+    <main className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 overflow-x-hidden">
+      
+      {/* --- NAVBAR RESPONSIVE --- */}
+      <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 transition-all">
+        <div className="container mx-auto px-6 h-20 flex items-center justify-between">
+          
+          {/* 1. LOGO (Toujours visible) */}
+          <div className="shrink-0">
+            <Logo className="h-10" />
           </div>
           
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-slate-900 tracking-tight mb-6 leading-tight">
-            Gérez vos biens <br />
+          {/* 2. LIENS BUREAU (Cachés sur mobile) */}
+          {/* hidden md:flex = Invisible sur mobile, Visible sur écran moyen+ */}
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 absolute left-1/2 -translate-x-1/2">
+            <Link href="#features" className="hover:text-blue-600 transition-colors">Fonctionnalités</Link>
+            <Link href="/market" className="hover:text-blue-600 transition-colors">Marketplace</Link>
+            <Link href="#pricing" className="hover:text-blue-600 transition-colors">Tarifs</Link>
+          </div>
+
+          {/* 3. ACTIONS BUREAU (Cachées sur mobile) */}
+          <div className="hidden md:flex gap-4 items-center">
+            <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-blue-600 px-2">
+              Se connecter
+            </Link>
+            <Link href="/register">
+              <Button className="bg-slate-900 text-white hover:bg-slate-800 rounded-full px-6 shadow-lg shadow-slate-200">
+                Essayer Gratuitement
+              </Button>
+            </Link>
+          </div>
+
+          {/* 4. BOUTON MENU MOBILE (Visible uniquement sur mobile) */}
+          <div className="md:hidden">
+             <button 
+               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+               className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+             >
+               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+             </button>
+          </div>
+        </div>
+
+        {/* --- MENU DÉROULANT MOBILE --- */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden absolute top-20 left-0 w-full bg-white border-b border-slate-200 shadow-xl animate-in slide-in-from-top-5 duration-200">
+             <div className="flex flex-col p-6 space-y-4">
+                <Link href="#features" className="text-lg font-medium text-slate-700 py-2 border-b border-slate-50" onClick={() => setIsMobileMenuOpen(false)}>
+                   Fonctionnalités
+                </Link>
+                <Link href="/market" className="text-lg font-medium text-slate-700 py-2 border-b border-slate-50" onClick={() => setIsMobileMenuOpen(false)}>
+                   Marketplace
+                </Link>
+                <Link href="#pricing" className="text-lg font-medium text-slate-700 py-2 border-b border-slate-50" onClick={() => setIsMobileMenuOpen(false)}>
+                   Tarifs
+                </Link>
+                
+                <div className="pt-4 flex flex-col gap-3">
+                   <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full justify-center h-12 text-base">Se connecter</Button>
+                   </Link>
+                   <Link href="/register" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button className="w-full justify-center bg-orange-500 hover:bg-orange-600 text-white h-12 text-base">
+                         Essayer Gratuitement
+                      </Button>
+                   </Link>
+                </div>
+             </div>
+          </div>
+        )}
+      </nav>
+
+      {/* --- HERO SECTION --- */}
+      <section className="relative pt-44 pb-32 overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-blue-50 via-white to-transparent -z-10"></div>
+        
+        <div className="container mx-auto px-6 text-center max-w-5xl">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider mb-8 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
+            V2.0 Disponible
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-100">
+            L'immobilier,<br />
             <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-blue-400">
-              en toute simplicité
+              en pilotage automatique.
             </span>
           </h1>
           
-          <p className="max-w-2xl mx-auto text-lg md:text-xl text-slate-500 mb-10 leading-relaxed">
-            Immo-Connect centralise la gestion de votre parc immobilier. 
-            Automatisez vos tâches, suivez vos loyers et communiquez avec vos locataires.
+          <p className="text-xl text-slate-500 mb-12 leading-relaxed max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
+            Centralisez vos biens, vos locataires et vos finances. 
+            Une plateforme unique pour les propriétaires qui veulent gagner du temps.
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/login">
-              <Button size="lg" className="rounded-full bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-200 border-none px-8 h-12 text-lg">
-                Commencer maintenant
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
+            <Link href="/register" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto h-14 px-10 text-lg rounded-full bg-orange-500 hover:bg-orange-600 text-white shadow-xl shadow-orange-200 hover:-translate-y-1 transition-all">
+                Commencer maintenant <ArrowRight className="ml-2" />
               </Button>
             </Link>
-            <Button variant="outline" size="lg" className="rounded-full border-slate-200 px-8 h-12 text-lg">
-              Voir la démo
-            </Button>
+            <Link href="/market" className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto h-14 px-10 text-lg rounded-full bg-white hover:bg-slate-50 border-slate-200 text-slate-700">
+                Voir le Market
+              </Button>
+            </Link>
           </div>
 
-          {/* Mockup visuel */}
-          <div className="mt-20 relative mx-auto max-w-5xl p-4 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl shadow-slate-200/50">
-             <div className="aspect-video bg-slate-50 rounded-xl border border-slate-100 overflow-hidden flex items-center justify-center relative">
+          {/* Mockup Dashboard */}
+          <div className="mt-20 relative mx-auto p-3 bg-white/40 backdrop-blur-xl rounded-3xl border border-white/50 shadow-2xl shadow-slate-200/50 animate-in fade-in zoom-in-95 duration-1000 delay-500">
+             <div className="aspect-video rounded-2xl bg-slate-100 overflow-hidden relative border border-slate-200 flex items-center justify-center group">
                 <div className="absolute inset-0 bg-linear-to-br from-slate-50 to-blue-50/30"></div>
-                <div className="text-slate-300 flex flex-col items-center gap-4">
-                  <LayoutDashboard size={64} className="text-blue-200" />
-                  <span className="font-medium text-slate-400">Interface Dashboard Immo-Connect</span>
+                <div className="text-center relative z-10 transform group-hover:scale-105 transition-transform duration-500">
+                   <LayoutDashboard size={80} className="text-blue-200 mx-auto mb-4"/>
+                   <p className="text-slate-400 font-medium text-lg">Interface Dashboard Interactive</p>
+                   <p className="text-slate-300 text-sm">Données financières en temps réel</p>
                 </div>
              </div>
           </div>
         </div>
       </section>
 
-      {/* 2. FEATURES SECTION */}
-      <section className="py-24 bg-white relative">
+      {/* --- BENTO GRID --- */}
+      <section id="features" className="py-32 bg-white">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-              Tout ce dont vous avez besoin
-            </h2>
-            <p className="text-slate-500 max-w-2xl mx-auto">
-              Une suite d'outils complète conçue pour optimiser chaque aspect de votre gestion locative.
-            </p>
+          <div className="text-center mb-20">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Tout ce dont vous avez besoin</h2>
+            <p className="text-slate-500 text-lg max-w-2xl mx-auto">Une suite d'outils complète conçue pour optimiser chaque aspect de votre gestion.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Feature 1 */}
-            <Card className="group border-slate-100 bg-white shadow-sm hover:shadow-xl hover:shadow-blue-100/50 transition-all duration-300 hover:-translate-y-1">
-              <CardHeader>
-                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-600 transition-colors duration-300">
-                  <Building2 className="text-blue-600 group-hover:text-white transition-colors" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[340px]">
+             <div className="md:col-span-2 rounded-3xl bg-slate-50 border border-slate-100 p-10 relative overflow-hidden group hover:border-blue-200 transition-all">
+                <div className="relative z-10">
+                   <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-blue-200"><Globe size={28} /></div>
+                   <h3 className="text-2xl font-bold text-slate-900 mb-3">Marketplace Intégrée</h3>
+                   <p className="text-slate-500 max-w-md text-lg leading-relaxed">Publiez vos biens vacants directement sur notre réseau public. Recevez des dossiers qualifiés sans effort marketing.</p>
                 </div>
-                <CardTitle className="text-xl text-slate-900">Gestion Locative</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-500 leading-relaxed">Suivez vos baux, quittances et états des lieux.</p>
-              </CardContent>
-            </Card>
+                <div className="absolute right-0 bottom-0 w-72 h-72 bg-linear-to-tl from-blue-100 to-transparent rounded-tl-full opacity-50 group-hover:scale-110 transition-transform duration-700"></div>
+             </div>
 
-            {/* Feature 2 */}
-            <Card className="group border-slate-100 bg-white shadow-sm hover:shadow-xl hover:shadow-blue-100/50 transition-all duration-300 hover:-translate-y-1">
-              <CardHeader>
-                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-600 transition-colors duration-300">
-                  <BarChart3 className="text-blue-600 group-hover:text-white transition-colors" />
+             <div className="md:col-span-1 rounded-3xl bg-slate-900 text-white p-10 flex flex-col justify-between relative overflow-hidden shadow-xl">
+                <div>
+                   <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-white mb-6 backdrop-blur-md border border-white/10"><Smartphone size={28} /></div>
+                   <h3 className="text-xl font-bold">100% Mobile</h3>
+                   <p className="text-slate-400 mt-3 text-base">Gérez tout depuis votre poche, où que vous soyez.</p>
                 </div>
-                <CardTitle className="text-xl text-slate-900">Finances</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-500 leading-relaxed">Tableaux de bord automatisés pour la rentabilité.</p>
-              </CardContent>
-            </Card>
+                <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-orange-500 rounded-full blur-[80px] opacity-40 animate-pulse-slow"></div>
+             </div>
 
-            {/* Feature 3 */}
-            <Card className="group border-slate-100 bg-white shadow-sm hover:shadow-xl hover:shadow-blue-100/50 transition-all duration-300 hover:-translate-y-1">
-              <CardHeader>
-                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-600 transition-colors duration-300">
-                  <Users className="text-blue-600 group-hover:text-white transition-colors" />
-                </div>
-                <CardTitle className="text-xl text-slate-900">Locataires</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-500 leading-relaxed">Portail dédié pour la communication et les paiements.</p>
-              </CardContent>
-            </Card>
+             <div className="md:col-span-1 rounded-3xl bg-orange-50 border border-orange-100 p-10 group hover:bg-orange-100/50 transition-colors">
+                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-orange-600 mb-6 shadow-sm"><Zap size={28} /></div>
+                <h3 className="text-xl font-bold text-slate-900">Finances Auto</h3>
+                <p className="text-slate-600 mt-3 text-base">Quittances, relances et rapports fiscaux automatisés par l'IA.</p>
+             </div>
 
-            {/* Feature 4 */}
-            <Card className="group border-slate-100 bg-white shadow-sm hover:shadow-xl hover:shadow-blue-100/50 transition-all duration-300 hover:-translate-y-1">
-              <CardHeader>
-                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-600 transition-colors duration-300">
-                  <Zap className="text-blue-600 group-hover:text-white transition-colors" />
+             <div className="md:col-span-2 rounded-3xl bg-white border border-slate-200 p-10 flex flex-col justify-center hover:shadow-lg transition-all">
+                <h3 className="text-2xl font-bold text-slate-900 mb-8">Un écosystème complet.</h3>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                   {["Gestion des travaux", "Espace Locataire", "Signature électronique", "Rapports Fiscaux", "État des lieux numérique", "Messagerie intégrée"].map((item, i) => (
+                      <div key={i} className="flex items-center gap-4 text-slate-600">
+                         <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0"><Check size={14}/></div>
+                         <span className="font-medium text-lg">{item}</span>
+                      </div>
+                   ))}
                 </div>
-                <CardTitle className="text-xl text-slate-900">IA Advisor</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-500 leading-relaxed">Conseils intelligents pour maximiser vos revenus.</p>
-              </CardContent>
-            </Card>
+             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. POURQUOI NOUS (Dark Section) */}
-      <section className="py-24 bg-slate-900 text-white overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-        
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                Pourquoi choisir <span className="text-blue-400">Immo-Connect</span> ?
-              </h2>
-              <p className="text-slate-400 text-lg mb-8 leading-relaxed">
-                Conçu par des experts de l'immobilier pour des exigences modernes.
-              </p>
-              
-              <div className="space-y-4">
-                {["Sécurité des données (AES-256)", "Support client 7j/7", "Mises à jour gratuites", "Compatible mobile"].map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <div className="shrink-0 w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <CheckCircle2 size={14} className="text-blue-400" />
-                    </div>
-                    <span className="text-slate-200">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-0 bg-blue-500 blur-[100px] opacity-20"></div>
-              <Card className="relative bg-slate-800/50 border-slate-700 backdrop-blur-sm p-6 text-white">
-                <div className="flex items-center gap-4 mb-6">
-                   <ShieldCheck className="text-blue-400 h-10 w-10" />
-                   <div>
-                     <h4 className="font-bold text-lg">Fiabilité Garantie</h4>
-                     <p className="text-slate-400 text-sm">99.9% Uptime</p>
-                   </div>
-                </div>
-                <div className="space-y-3">
-                   <div className="h-2 w-full bg-slate-700 rounded-full overflow-hidden">
-                      <div className="h-full w-[90%] bg-blue-500 rounded-full"></div>
-                   </div>
-                   <div className="flex justify-between text-xs text-slate-400">
-                      <span>Performance</span>
-                      <span>Excellent</span>
-                   </div>
-                </div>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. FOOTER */}
-      <footer className="bg-slate-50 py-16 border-t border-slate-200">
-        <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                 <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center text-white font-bold">I</div>
-                 <span className="text-xl font-bold text-slate-900">Immo-Connect</span>
-              </div>
-              <p className="text-slate-500 mb-6 max-w-sm">
-                La plateforme moderne pour les propriétaires exigeants.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-bold text-slate-900 mb-4">Produit</h4>
-              <ul className="space-y-2 text-sm text-slate-500">
-                <li><Link href="#" className="hover:text-blue-600">Fonctionnalités</Link></li>
-                <li><Link href="#" className="hover:text-blue-600">Tarifs</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-slate-900 mb-4">Newsletter</h4>
-              <div className="flex flex-col gap-2">
-                <Input placeholder="Email" className="bg-white border-slate-200" />
-                <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white">S'inscrire</Button>
-              </div>
-            </div>
-          </div>
+      {/* FOOTER */}
+      <footer className="bg-white border-t border-slate-200 py-12 text-center text-slate-500 text-sm">
+        <div className="container mx-auto px-6 flex flex-col items-center">
+           <div className="mb-6"><Logo className="h-8 opacity-80" /></div>
+           <p>&copy; {CURRENT_YEAR} Immo-Connect. Fait avec passion pour l'immobilier.</p>
         </div>
       </footer>
     </main>

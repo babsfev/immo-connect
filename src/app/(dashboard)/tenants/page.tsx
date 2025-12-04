@@ -1,175 +1,126 @@
-"use client";
-
-import React, { useState } from "react";
-import { 
-  Plus, Search, Phone, Mail, MoreVertical, User, CheckCircle2, 
-  AlertCircle, FileText, Users 
-} from "lucide-react";
-import { toast } from "sonner"; // Notification
-
+import React from "react";
+import Link from "next/link";
+import { Plus, Search, Filter, MessageCircle, MoreHorizontal, UploadCloud, User } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import Input from "@/components/ui/Input";
-import { Modal } from "@/components/ui/Modal"; // Ton composant Modal
-import { EmptyState } from "@/components/ui/EmptyState"; // Ton composant EmptyState
+import { formatCurrency } from "@/lib/utils";
+import { getTenants } from "@/app/data/tenants"; // <-- On utilise le vrai chargeur
 
-// Mock Data
-const initialTenants = [
-  {
-    id: 1, name: "Moussa Diop", property: "Appartement T3 - Centre Ville",
-    status: "À jour", nextPayment: "05 Nov 2024", amount: 450000,
-    avatar: "bg-blue-100 text-blue-700", initials: "MD"
-  },
-  {
-    id: 2, name: "Sarah Ndiaye", property: "Studio Meublé - Almadies",
-    status: "En retard", nextPayment: "01 Oct 2024", amount: 300000,
-    avatar: "bg-orange-100 text-orange-700", initials: "SN"
-  },
-  {
-    id: 3, name: "Jean Dupont", property: "Local Commercial - Plateau",
-    status: "En attente", nextPayment: "05 Nov 2024", amount: 850000,
-    avatar: "bg-purple-100 text-purple-700", initials: "JD"
-  },
-  {
-    id: 4, name: "Fatou Sow", property: "Villa Corniche Ouest",
-    status: "À jour", nextPayment: "05 Nov 2024", amount: 1200000,
-    avatar: "bg-green-100 text-green-700", initials: "FS"
-  }
-];
-
-export default function TenantsPage() {
-  const [tenants, setTenants] = useState(initialTenants);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleAddTenant = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsModalOpen(false);
-    toast.success("Locataire ajouté avec succès", {
-      description: "Le dossier a été créé et l'invitation envoyée."
-    });
-  };
+export default async function TenantsPage() {
+  // 1. Chargement des vraies données
+  const tenants = await getTenants();
 
   return (
-    <div className="space-y-8 pb-10">
-      {/* Header */}
+    <div className="space-y-8 pb-10 animate-in fade-in duration-500">
+      
+      {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Mes Locataires</h1>
-          <p className="text-slate-500">Suivez vos contrats et paiements.</p>
+          <p className="text-slate-500">Gérez vos contrats ({tenants.length} actifs).</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} className="bg-orange-500 hover:bg-orange-600 text-white">
-          <Plus size={18} className="mr-2" /> Nouveau Locataire
-        </Button>
-      </div>
-
-      {/* Stats Rapides */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="flex items-center gap-4 p-4">
-           <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600"><User size={24} /></div>
-           <div><p className="text-sm text-slate-500">Total</p><p className="text-2xl font-bold text-slate-900">{tenants.length}</p></div>
-        </Card>
-        <Card className="flex items-center gap-4 p-4">
-           <div className="h-12 w-12 rounded-full bg-green-50 flex items-center justify-center text-green-600"><CheckCircle2 size={24} /></div>
-           <div><p className="text-sm text-slate-500">À jour</p><p className="text-2xl font-bold text-slate-900">21</p></div>
-        </Card>
-        <Card className="bg-red-50/30 border-red-100 flex items-center gap-4 p-4">
-           <div className="h-12 w-12 rounded-full bg-white border border-red-100 flex items-center justify-center text-red-500"><AlertCircle size={24} /></div>
-           <div><p className="text-sm text-slate-500">Retards</p><p className="text-2xl font-bold text-red-600">3</p></div>
-        </Card>
-      </div>
-
-      {/* Search */}
-      <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <Input placeholder="Rechercher un locataire..." className="pl-10" />
+        <div className="flex gap-3">
+          <Button variant="outline" className="bg-white border-slate-200 text-slate-600">
+            <UploadCloud size={18} className="mr-2" /> Importer
+          </Button>
+          <Link href="/tenants/new">
+            <Button className="bg-blue-600 text-white shadow-lg hover:bg-blue-700">
+               <Plus size={18} className="mr-2" /> Nouveau
+            </Button>
+          </Link>
         </div>
       </div>
 
-      {/* Liste Cards ou Empty State */}
+      {/* EMPTY STATE (Si vide) */}
       {tenants.length === 0 ? (
-        <EmptyState 
-          icon={Users}
-          title="Aucun locataire"
-          description="Ajoutez des locataires pour suivre leurs paiements et contrats."
-          actionLabel="Ajouter un locataire"
-          onAction={() => setIsModalOpen(true)}
-        />
+         <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300 flex flex-col items-center justify-center">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+               <User size={32}/>
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">Aucun locataire</h3>
+            <p className="text-slate-500 mb-6 text-sm">Ajoutez votre premier locataire pour générer des loyers.</p>
+            <Link href="/tenants/new"><Button>Ajouter un locataire</Button></Link>
+         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {tenants.map((tenant) => {
-            let badgeVariant: "success" | "danger" | "warning" | "default" = "default";
-            if (tenant.status === "À jour") badgeVariant = "success";
-            if (tenant.status === "En retard") badgeVariant = "danger";
-            if (tenant.status === "En attente") badgeVariant = "warning";
+         <>
+            {/* TABLEAU (DESKTOP) */}
+            <div className="hidden md:block bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+               <table className="w-full text-sm text-left">
+                  <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs border-b border-slate-100">
+                  <tr>
+                     <th className="px-6 py-4">Locataire</th>
+                     <th className="px-6 py-4">Bien Loué</th>
+                     <th className="px-6 py-4">Loyer</th>
+                     <th className="px-6 py-4">Statut Paiement</th>
+                     <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                  {tenants.map((tenant) => (
+                     <tr key={tenant.id} className="hover:bg-slate-50 transition-colors group">
+                        <td className="px-6 py-4">
+                           <div className="flex items-center gap-3">
+                              <div className="h-9 w-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+                                 {tenant.initials}
+                              </div>
+                              <div>
+                                 <p className="font-bold text-slate-900">{tenant.name}</p>
+                                 <p className="text-xs text-slate-500">{tenant.phone}</p>
+                              </div>
+                           </div>
+                        </td>
+                        <td className="px-6 py-4 font-medium text-slate-700">{tenant.property}</td>
+                        <td className="px-6 py-4 font-mono text-slate-600">{formatCurrency(tenant.rent)}</td>
+                        <td className="px-6 py-4">
+                           <Badge variant={tenant.status === "En retard" ? "danger" : tenant.status === "À jour" ? "success" : "warning"}>
+                              {tenant.status}
+                           </Badge>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                           <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <a href={`https://wa.me/${tenant.phone.replace(/\s/g,'')}`} target="_blank">
+                                 <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600 hover:bg-green-50"><MessageCircle size={16}/></Button>
+                              </a>
+                              <Link href={`/tenants/${tenant.id}`}>
+                                 <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-blue-600"><MoreHorizontal size={16}/></Button>
+                              </Link>
+                           </div>
+                        </td>
+                     </tr>
+                  ))}
+                  </tbody>
+               </table>
+            </div>
 
-            return (
-              <Card key={tenant.id} className="group hover:border-blue-300 transition-colors">
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-4">
-                      <div className={`h-12 w-12 rounded-full flex items-center justify-center text-lg font-bold ${tenant.avatar}`}>
-                        {tenant.initials}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-slate-900 text-lg">{tenant.name}</h3>
-                        <p className="text-sm text-slate-500 truncate max-w-[200px]">{tenant.property}</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreVertical size={20} /></Button>
-                  </div>
-
-                  <div className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-100 mb-6">
-                    <div>
-                        <p className="text-xs text-slate-400 mb-1">Prochain Loyer</p>
-                        <p className="font-bold text-slate-900">{tenant.amount.toLocaleString()} FCFA</p>
-                    </div>
-                    <Badge variant={badgeVariant}>{tenant.status}</Badge>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    <Button variant="outline" size="sm"><Phone size={16} className="mr-2" /> Appeler</Button>
-                    <Button variant="outline" size="sm"><Mail size={16} className="mr-2" /> Email</Button>
-                    <Button variant="outline" size="sm"><FileText size={16} className="mr-2" /> Bail</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+            {/* CARTES (MOBILE) */}
+            <div className="md:hidden grid grid-cols-1 gap-4">
+               {tenants.map((tenant) => (
+                  <Link key={tenant.id} href={`/tenants/${tenant.id}`}>
+                     <Card className="active:scale-[0.98] transition-transform">
+                        <CardContent className="p-4 flex items-center justify-between">
+                           <div className="flex items-center gap-3">
+                              <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
+                                 {tenant.initials}
+                              </div>
+                              <div>
+                                 <h4 className="font-bold text-slate-900">{tenant.name}</h4>
+                                 <p className="text-xs text-slate-500">{tenant.property}</p>
+                                 <Badge className="mt-1 text-[10px] px-1.5 py-0" variant={tenant.status === "En retard" ? "danger" : "success"}>
+                                    {tenant.status}
+                                 </Badge>
+                              </div>
+                           </div>
+                           <div className="text-right">
+                              <p className="font-bold text-slate-900">{formatCurrency(tenant.rent)}</p>
+                           </div>
+                        </CardContent>
+                     </Card>
+                  </Link>
+               ))}
+            </div>
+         </>
       )}
-
-      {/* Modal Ajout Locataire */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Nouveau Locataire">
-        <form onSubmit={handleAddTenant} className="space-y-4">
-            <div>
-                <label className="text-sm font-medium text-slate-700">Nom complet</label>
-                <Input required placeholder="Ex: Moussa Diop" />
-            </div>
-            <div>
-                <label className="text-sm font-medium text-slate-700">Assigner à une propriété</label>
-                <select className="w-full p-2 border border-slate-200 rounded-md bg-white text-sm">
-                    <option>Appartement T3 - Centre Ville</option>
-                    <option>Villa Corniche</option>
-                </select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="text-sm font-medium text-slate-700">Loyer (FCFA)</label>
-                    <Input type="number" placeholder="0" />
-                </div>
-                <div>
-                    <label className="text-sm font-medium text-slate-700">Date d'entrée</label>
-                    <Input type="date" />
-                </div>
-            </div>
-            <div className="pt-4 flex justify-end gap-2 border-t border-slate-100 mt-4">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Annuler</Button>
-                <Button type="submit" className="bg-orange-500 text-white hover:bg-orange-600">Créer le dossier</Button>
-            </div>
-        </form>
-      </Modal>
     </div>
   );
 }

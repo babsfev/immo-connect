@@ -1,28 +1,31 @@
-// Données constantes pour le contexte Sénégalais
-export const CURRENCY = "FCFA";
-export const LOCALE = "fr-SN";
-
+// Données de référence pour le Sénégal
 export const SENEGAL_REGIONS = [
   "Dakar", "Thiès", "Saint-Louis", "Diourbel", "Ziguinchor", 
   "Kaolack", "Tambacounda", "Louga", "Fatick", "Kolda", 
   "Matam", "Kaffrine", "Kédougou", "Sédhiou"
 ];
 
-export const DAKAR_DISTRICTS = [
-  "Almadies", "Plateau", "Point E", "Fann", "Mermoz", 
-  "Sacré-Cœur", "Yoff", "Ouakam", "Ngor", "Parcelles Assainies",
-  "Grand Dakar", "Hann Maristes", "Corniche Ouest"
+// Quartiers de Dakar (Pour l'autocomplétion)
+export const DAKAR_QUARTIERS = [
+  "Almadies", "Plateau", "Point E", "Fann Résidence", "Mermoz", 
+  "Sacré-Cœur", "Yoff", "Ouakam", "Ngor", "Virage",
+  "Parcelles Assainies", "Grand Dakar", "Hann Maristes", 
+  "Corniche Ouest", "Mamelles", "Sicap Liberté"
 ];
 
-export const PROPERTY_TYPES = [
-  "Appartement", "Villa", "Studio", "Bureau", "Local Commercial", "Terrain"
-];
-
-// Helper pour formatter les prix selon le standard local
-export const formatCFA = (amount: number) => {
-  return new Intl.NumberFormat(LOCALE, {
-    style: "currency",
-    currency: "XOF",
-    minimumFractionDigits: 0,
-  }).format(amount).replace("XOF", "FCFA");
+export const CURRENCY = {
+  code: "XOF",
+  symbol: "FCFA",
+  locale: "fr-SN"
 };
+
+// Helper pour formater un numéro de téléphone au format local (+221)
+export function formatPhoneNumber(phone: string) {
+  // Nettoie tout ce qui n'est pas chiffre
+  const cleaned = phone.replace(/\D/g, '');
+  // Si ça commence par 77, 76, 75, 70, 78... on ajoute +221
+  if (cleaned.length === 9 && (cleaned.startsWith('7'))) {
+    return `+221 ${cleaned.substring(0, 2)} ${cleaned.substring(2, 5)} ${cleaned.substring(5, 7)} ${cleaned.substring(7)}`;
+  }
+  return phone;
+}

@@ -1,197 +1,169 @@
 import React from "react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { 
-  ArrowLeft, Phone, Mail, MapPin, FileText, 
-  CheckCircle2, AlertCircle, Clock, Download, 
-  TrendingUp, Shield, Star 
+  ArrowLeft, Phone, Mail, MapPin, MessageCircle, FileText, CheckCircle2, AlertCircle 
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils";
+import { getTenantById } from "@/app/data/tenants"; // <--- On importe la fonction ici !
 
-export default function TenantDetailPage({ params }: { params: { id: string } }) {
-  // Mock Data Locataire
-  const tenant = {
-    id: params.id,
-    name: "Moussa Diop",
-    email: "moussa.diop@gmail.com",
-    phone: "+221 77 123 45 67",
-    job: "Ingénieur Informatique",
-    status: "À jour",
-    score: 95, // Score de fiabilité
-    property: "Appartement T3 - Centre Ville",
-    leaseStart: "01 Jan 2023",
-    leaseEnd: "31 Déc 2024",
-    rent: 450000,
-    deposit: 900000,
-    documents: [
-      { name: "Contrat de Bail.pdf", date: "01 Jan 2023", size: "2.4 Mo" },
-      { name: "État des lieux.pdf", date: "01 Jan 2023", size: "1.1 Mo" },
-      { name: "Pièce d'identité.jpg", date: "15 Déc 2022", size: "0.5 Mo" },
-    ],
-    history: [
-      { month: "Nov 2024", amount: 450000, status: "Payé", date: "05 Nov" },
-      { month: "Oct 2024", amount: 450000, status: "Payé", date: "04 Oct" },
-      { month: "Sep 2024", amount: 450000, status: "Retard", date: "12 Sep" }, // Payé en retard
-      { month: "Août 2024", amount: 450000, status: "Payé", date: "03 Août" },
-    ]
-  };
+export default async function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  
+  // Appel de la fonction importée
+  const tenant = await getTenantById(id);
+
+  if (!tenant) notFound();
+
+  const activeLease = tenant.leases[0];
+  const leaseStart = activeLease ? new Date(activeLease.startDate).toLocaleDateString("fr-FR") : "-";
+  const leaseEnd = activeLease ? new Date(activeLease.endDate).toLocaleDateString("fr-FR") : "-";
+  const waLink = `https://wa.me/${tenant.phone.replace(/\s/g,'')}?text=Bonjour ${tenant.firstName}`;
 
   return (
-    <div className="space-y-8 pb-10">
-      
-      {/* 1. Header & Navigation */}
+    <div className="space-y-8 pb-10 animate-in fade-in duration-500">
+      {/* HEADER */}
       <div className="flex flex-col gap-4">
         <Link href="/tenants">
-          <Button variant="ghost" size="sm" className="pl-0 text-slate-500 hover:text-blue-600">
-            <ArrowLeft size={16} className="mr-2" /> Retour
+          <Button variant="ghost" size="sm" className="pl-0 text-slate-500 hover:text-slate-800">
+            <ArrowLeft size={16} className="mr-2" /> Retour liste
           </Button>
         </Link>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl font-bold">
-                 {tenant.name.charAt(0)}
+              <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md">
+                 {tenant.firstName.charAt(0)}{tenant.lastName.charAt(0)}
               </div>
               <div>
-                 <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    {tenant.name}
-                    <Badge variant="success" className="text-xs">{tenant.status}</Badge>
-                 </h1>
-                 <p className="text-slate-500 flex items-center gap-1 text-sm">
-                    <MapPin size={14}/> {tenant.property}
-                 </p>
+                 <h1 className="text-2xl font-bold text-slate-900">{tenant.firstName} {tenant.lastName}</h1>
+                 <div className="flex items-center gap-2 text-slate-500 text-sm mt-1">
+                    <Mail size={14}/> {tenant.email}
+                    <span className="text-slate-300">•</span>
+                    <Phone size={14}/> {tenant.phone}
+                 </div>
               </div>
            </div>
+           
            <div className="flex gap-2">
-              <Button variant="outline"><Mail size={16} className="mr-2"/> Message</Button>
-              <Button className="bg-blue-600 text-white"><Phone size={16} className="mr-2"/> Appeler</Button>
+              <a href={waLink} target="_blank" rel="noopener noreferrer">
+                 <Button className="bg-green-600 hover:bg-green-700 text-white">
+                    <MessageCircle size={18} className="mr-2"/> WhatsApp
+                 </Button>
+              </a>
+              <Button variant="outline">Modifier</Button>
            </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-         
-         {/* 2. COLONNE GAUCHE : Infos & Score */}
-         <div className="space-y-6">
-            
-            {/* Carte Score (Avis Automatique) */}
-            <Card className="bg-linear-to-br from-slate-900 to-slate-800 text-white border-none">
-               <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                     <div>
-                        <p className="text-slate-400 text-sm">Fiabilité Locataire</p>
-                        <h3 className="text-3xl font-bold text-white mt-1">{tenant.score}/100</h3>
-                     </div>
-                     <div className="p-2 bg-white/10 rounded-lg"><Shield className="text-green-400" size={24}/></div>
-                  </div>
-                  <div className="space-y-2">
-                     <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
-                        <div className="bg-green-500 h-full" style={{ width: `${tenant.score}%` }}></div>
-                     </div>
-                     <p className="text-xs text-slate-400 italic">
-                        "Locataire assidu. Un seul retard léger en 12 mois."
-                     </p>
-                  </div>
-               </CardContent>
-            </Card>
-
-            {/* Infos Contrat */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+         {/* INFO PRINCIPALES */}
+         <div className="lg:col-span-2 space-y-6">
             <Card>
-               <CardHeader><CardTitle>Contrat de Bail</CardTitle></CardHeader>
-               <CardContent className="space-y-4">
-                  <div className="flex justify-between text-sm">
-                     <span className="text-slate-500">Loyer</span>
-                     <span className="font-bold text-slate-900">{formatCurrency(tenant.rent)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                     <span className="text-slate-500">Caution</span>
-                     <span className="font-bold text-slate-900">{formatCurrency(tenant.deposit)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                     <span className="text-slate-500">Début du bail</span>
-                     <span className="font-medium text-slate-700">{tenant.leaseStart}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                     <span className="text-slate-500">Fin du bail</span>
-                     <span className="font-medium text-slate-700">{tenant.leaseEnd}</span>
-                  </div>
-                  <div className="pt-4 border-t border-slate-100">
-                     <Button variant="outline" className="w-full text-xs"><FileText size={14} className="mr-2"/> Voir le contrat</Button>
-                  </div>
-               </CardContent>
-            </Card>
-
-            {/* Documents */}
-            <Card>
-               <CardHeader><CardTitle>Documents</CardTitle></CardHeader>
-               <CardContent className="space-y-3">
-                  {tenant.documents.map((doc, i) => (
-                     <div key={i} className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg border border-transparent hover:border-slate-100 transition-all group cursor-pointer">
-                        <div className="flex items-center gap-3 overflow-hidden">
-                           <div className="bg-orange-50 text-orange-600 p-2 rounded"><FileText size={16}/></div>
-                           <div className="truncate">
-                              <p className="text-sm font-medium text-slate-700 truncate">{doc.name}</p>
-                              <p className="text-[10px] text-slate-400">{doc.date} • {doc.size}</p>
-                           </div>
-                        </div>
-                        <Download size={16} className="text-slate-300 group-hover:text-blue-600"/>
-                     </div>
-                  ))}
-               </CardContent>
-            </Card>
-         </div>
-
-         {/* 3. COLONNE DROITE : Historique Paiements */}
-         <div className="lg:col-span-2">
-            <Card className="h-full">
-               <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                     <TrendingUp size={20} className="text-blue-600"/> Historique des Paiements
+               <CardHeader className="pb-3 border-b border-slate-100">
+                  <CardTitle className="text-base font-bold text-slate-800 flex justify-between items-center">
+                     <span>Bien Loué</span>
+                     {tenant.property ? (
+                        <Link href={`/properties/${tenant.property.id}`} className="text-xs text-blue-600 hover:underline font-normal">
+                           Voir la fiche bien
+                        </Link>
+                     ) : <Badge variant="warning">Aucun</Badge>}
                   </CardTitle>
                </CardHeader>
-               <CardContent>
-                  <div className="space-y-1">
-                     {tenant.history.map((payment, i) => (
-                        <div key={i} className="flex items-center justify-between p-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
-                           <div className="flex items-center gap-4">
-                              <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                                 payment.status === "Payé" ? "bg-green-100 text-green-600" : "bg-orange-100 text-orange-600"
-                              }`}>
-                                 {payment.status === "Payé" ? <CheckCircle2 size={18}/> : <Clock size={18}/>}
-                              </div>
-                              <div>
-                                 <p className="font-bold text-slate-900">{payment.month}</p>
-                                 <p className="text-xs text-slate-500">Reçu le {payment.date}</p>
-                              </div>
-                           </div>
-                           <div className="text-right">
-                              <p className="font-bold text-slate-900">{formatCurrency(payment.amount)}</p>
-                              <Badge variant={payment.status === "Payé" ? "success" : "warning"} className="mt-1">
-                                 {payment.status}
-                              </Badge>
-                           </div>
-                           <Button variant="ghost" size="sm" className="text-slate-400 hover:text-blue-600">
-                              <Download size={16}/>
-                           </Button>
-                        </div>
-                     ))}
-                  </div>
-                  {/* Bouton Générer avis */}
-                  <div className="mt-8 p-4 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between">
-                     <div className="flex items-center gap-3">
-                        <Star className="text-orange-500 fill-orange-500" size={20} />
+               <CardContent className="pt-4">
+                  {tenant.property ? (
+                     <div className="flex justify-between items-center">
                         <div>
-                           <p className="text-sm font-bold text-blue-900">Générer une attestation de bon payeur ?</p>
-                           <p className="text-xs text-blue-600">Basé sur son score de 95/100.</p>
+                           <h3 className="font-bold text-lg text-slate-900">{tenant.property.title}</h3>
+                           <p className="text-slate-500 text-sm flex items-center gap-1 mt-1">
+                              <MapPin size={14} className="text-orange-500"/> {tenant.property.address}, {tenant.property.city}
+                           </p>
+                        </div>
+                        <div className="text-right">
+                           <p className="text-xs text-slate-400 font-bold uppercase">Loyer Actuel</p>
+                           <p className="text-xl font-extrabold text-blue-700">{activeLease ? formatCurrency(activeLease.rentAmount) : "-"}</p>
                         </div>
                      </div>
-                     <Button size="sm" className="bg-blue-600 text-white">Générer PDF</Button>
+                  ) : (
+                     <p className="text-slate-500 italic">Ce locataire n'est assigné à aucun bien.</p>
+                  )}
+               </CardContent>
+            </Card>
+
+            {/* HISTORIQUE PAIEMENTS */}
+            <Card>
+               <CardHeader className="pb-3 border-b border-slate-100">
+                  <CardTitle className="text-base font-bold text-slate-800">Derniers Paiements</CardTitle>
+               </CardHeader>
+               <CardContent className="p-0">
+                  <div className="divide-y divide-slate-100">
+                     {tenant.payments.length === 0 ? (
+                        <div className="p-6 text-center text-slate-400 text-sm">Aucun historique.</div>
+                     ) : (
+                        tenant.payments.map(pay => (
+                           <div key={pay.id} className="p-4 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                              <div className="flex items-center gap-3">
+                                 <div className={`p-2 rounded-full ${pay.status === 'PAID' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
+                                    {pay.status === 'PAID' ? <CheckCircle2 size={16}/> : <AlertCircle size={16}/>}
+                                 </div>
+                                 <div>
+                                    <p className="text-sm font-bold text-slate-900">{formatCurrency(pay.amount)}</p>
+                                    <p className="text-xs text-slate-500">Échéance : {new Date(pay.dueDate).toLocaleDateString()}</p>
+                                 </div>
+                              </div>
+                              <Badge variant={pay.status === 'PAID' ? 'success' : 'warning'}>
+                                 {pay.status}
+                              </Badge>
+                           </div>
+                        ))
+                     )}
                   </div>
                </CardContent>
             </Card>
          </div>
 
+         {/* SIDEBAR INFO */}
+         <div className="space-y-6">
+            <Card>
+               <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
+                  <CardTitle className="text-sm font-bold text-slate-800">Détails du Bail</CardTitle>
+               </CardHeader>
+               <CardContent className="space-y-4 pt-4">
+                  <div className="flex justify-between text-sm">
+                     <span className="text-slate-500">Début</span>
+                     <span className="font-medium">{leaseStart}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                     <span className="text-slate-500">Fin (Renouv.)</span>
+                     <span className="font-medium">{leaseEnd}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                     <span className="text-slate-500">Dépôt Garantie</span>
+                     <span className="font-medium">{activeLease ? formatCurrency(activeLease.deposit) : "-"}</span>
+                  </div>
+                  <div className="pt-4 border-t border-slate-100">
+                     <Button variant="outline" className="w-full justify-start text-slate-600">
+                        <FileText size={16} className="mr-2"/> Voir le contrat
+                     </Button>
+                  </div>
+               </CardContent>
+            </Card>
+
+            <Card>
+               <CardHeader className="pb-3 border-b border-slate-100">
+                  <CardTitle className="text-sm font-bold text-slate-800">Solvabilité</CardTitle>
+               </CardHeader>
+               <CardContent className="pt-4 text-center">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full border-4 border-green-100 text-green-600 text-2xl font-bold mb-2">
+                     {tenant.solvencyScore ?? 100}
+                  </div>
+                  <p className="text-xs text-slate-500">Score de fiabilité</p>
+               </CardContent>
+            </Card>
+         </div>
       </div>
     </div>
   );

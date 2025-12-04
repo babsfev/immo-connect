@@ -1,247 +1,219 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // Pour la redirection
+import { notFound } from "next/navigation";
 import { 
-  ArrowLeft, MapPin, BedDouble, Bath, Maximize, Edit, Trash2, 
-  User, Phone, Mail, FileText, TrendingUp, Wallet, History, Wrench
+  ArrowLeft, Building2, MapPin, Edit, Trash2, 
+  User, FileText, Wallet, Maximize, BedDouble, Bath, 
+  Grid, Plus, ArrowRight
 } from "lucide-react";
-import { toast } from "sonner";
-
 import Button from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs"; // Ton composant Breadcrumbs
-import { formatCFA } from "@/lib/senegal-data"; 
+import { getPropertyById } from "@/app/data/properties";
+import { formatCurrency } from "@/lib/utils";
+import { PROPERTY_STATUS_LABELS, PROPERTY_TYPE_LABELS } from "@/lib/constants";
+import DeletePropertyButton from "@/components/properties/DeletePropertyButton";
 
-export default function PropertyDetailPage({ params }: { params: { id: string } }) {
-  const router = useRouter();
+export default async function PropertyDetailsPage({ params }: { params: { id: string } }) {
+  const property = await getPropertyById(params.id);
 
-  // Simulation Data
-  const property = {
-    id: params.id,
-    title: "Villa Corniche Ouest",
-    address: "Corniche Ouest, Dakar, Sénégal",
-    price: 1200000,
-    status: "Loué",
-    type: "Villa",
-    description: "Magnifique villa de haut standing avec vue sur mer, piscine et jardin arboré. Située dans un quartier sécurisé et prisé.",
-    specs: { beds: 4, baths: 3, area: 250, built: 2018 },
-    tenant: {
-      name: "Fatou Sow",
-      email: "fatou.sow@gmail.com",
-      phone: "+221 77 000 11 22",
-      entryDate: "01 Jan 2023",
-      paymentStatus: "À jour"
-    },
-    financials: {
-      yield: "8.5%",
-      totalRevenue: 14400000,
-      expenses: 1200000
-    }
-  };
+  if (!property) notFound();
 
-  let badgeVariant: "success" | "default" | "warning" = "default";
-  if (property.status === "Loué") badgeVariant = "success";
-  if (property.status === "Travaux") badgeVariant = "warning";
+  const isRented = property.status === "RENTED";
+  const isBuilding = property.type === "BUILDING" || property.lots.length > 0;
 
-  // Actions Handlers
-  const handleDelete = () => {
-      if(confirm("Êtes-vous sûr de vouloir supprimer ce bien ?")) {
-          toast.success("Bien supprimé", { description: "Redirection vers la liste..." });
-          setTimeout(() => router.push("/properties"), 1000);
-      }
-  };
-
-  const handleEdit = () => {
-      toast.info("Mode édition", { description: "Fonctionnalité d'édition à venir." });
-  };
+  // Calculs automatiques pour l'immeuble
+  const totalRent = property.lots.reduce((sum, lot) => sum + lot.price, 0);
+  const occupiedLots = property.lots.filter(lot => lot.tenants.length > 0).length;
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="max-w-6xl mx-auto space-y-8 pb-20 animate-in fade-in duration-500">
       
-      {/* 1. Navigation & Header */}
-      <div className="flex flex-col gap-4">
-        {/* BREADCRUMBS AJOUTÉ ICI */}
-        <div className="flex items-center justify-between">
-            <Breadcrumbs 
-                items={[
-                { label: "Mes Biens", href: "/properties" },
-                { label: property.title } 
-                ]} 
-            />
-            <Link href="/properties">
-                <Button variant="ghost" size="sm" className="text-slate-500 hover:text-blue-600">
-                    <ArrowLeft size={16} className="mr-2" /> Retour
-                </Button>
-            </Link>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mt-2">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Badge variant={badgeVariant}>{property.status}</Badge>
-              <span className="text-sm text-blue-600 font-semibold uppercase tracking-wider">{property.type}</span>
-            </div>
-            <h1 className="text-3xl font-bold text-slate-900">{property.title}</h1>
-            <div className="flex items-center text-slate-500 mt-2">
-              <MapPin size={16} className="mr-1 text-orange-500" />
-              {property.address}
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={handleEdit} variant="outline" className="border-slate-200 text-slate-600">
-              <Edit size={16} className="mr-2" /> Modifier
-            </Button>
-            <Button onClick={handleDelete} variant="outline" className="border-red-200 text-red-600 hover:bg-red-50">
-              <Trash2 size={16} className="mr-2" /> Supprimer
-            </Button>
-          </div>
+      {/* HEADER & NAVIGATION */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <Link href="/properties" className="text-slate-500 hover:text-slate-900 text-sm flex items-center gap-2 font-medium transition-colors">
+           <ArrowLeft size={16}/> Retour à la liste
+        </Link>
+        <div className="flex gap-2">
+           <DeletePropertyButton id={property.id} title={property.title} />
+           <Link href={`/properties/${property.id}/edit`}>
+              <Button variant="outline" className="bg-white border-slate-200 text-slate-700">
+                 <Edit size={16} className="mr-2"/> Modifier
+              </Button>
+           </Link>
         </div>
       </div>
 
+      {/* CARTE D'IDENTITÉ DU BIEN */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* 2. COLONNE GAUCHE : Détails & Photos */}
-        <div className="lg:col-span-2 space-y-8">
-          
-          {/* Image Placeholder */}
-          <div className="h-64 md:h-80 w-full bg-slate-200 rounded-xl relative overflow-hidden group shadow-sm">
-             <div className="absolute inset-0 bg-linear-to-t from-slate-900/50 to-transparent"></div>
-             <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-medium">
-                
-             </div>
-             <div className="absolute bottom-4 left-4 right-4 flex justify-between text-white">
-                <div className="flex gap-6">
-                   <span className="flex items-center gap-2"><BedDouble size={20}/> {property.specs.beds} Ch.</span>
-                   <span className="flex items-center gap-2"><Bath size={20}/> {property.specs.baths} Sdb.</span>
-                   <span className="flex items-center gap-2"><Maximize size={20}/> {property.specs.area} m²</span>
-                </div>
-             </div>
-          </div>
+         
+         {/* COLONNE GAUCHE : IMAGE & INFO PRINCIPALE */}
+         <div className="lg:col-span-2 space-y-6">
+            
+            <Card className="overflow-hidden border-slate-200 shadow-md">
+               <div className="h-64 bg-slate-100 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
+                  {property.coverImage ? (
+                    <img src={property.coverImage} alt={property.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <Building2 size={64} className="text-slate-300"/>
+                  )}
+                  
+                  <Badge className={`absolute top-4 right-4 px-3 py-1 text-sm ${isRented || occupiedLots > 0 ? "bg-blue-600" : "bg-green-600"} border-none text-white shadow-sm`}>
+                     {isBuilding 
+                        ? `${occupiedLots}/${property.lots.length} Occupés` 
+                        : (PROPERTY_STATUS_LABELS[property.status] || property.status)}
+                  </Badge>
+               </div>
+               
+               <CardContent className="p-8">
+                  <div className="flex justify-between items-start mb-4">
+                     <div>
+                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                           {PROPERTY_TYPE_LABELS[property.type] || property.type}
+                        </div>
+                        <h1 className="text-3xl font-extrabold text-slate-900">{property.title}</h1>
+                     </div>
+                     <div className="text-right">
+                        {/* Si c'est un immeuble, on affiche la somme des loyers */}
+                        <p className="text-2xl font-extrabold text-blue-600">
+                           {isBuilding ? formatCurrency(totalRent) : formatCurrency(property.price)}
+                        </p>
+                        <p className="text-xs text-slate-400 font-medium">
+                           {isBuilding ? "/ mois (Potentiel)" : "/ mois"}
+                        </p>
+                     </div>
+                  </div>
 
-          {/* Description */}
-          <Card>
-             <CardHeader>
-                <CardTitle>Description</CardTitle>
-             </CardHeader>
-             <CardContent>
-                <p className="text-slate-600 leading-relaxed">
-                   {property.description}
-                </p>
-                <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                   <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                      <p className="text-xs text-slate-500 mb-1">Année constr.</p>
-                      <p className="font-semibold text-slate-900">{property.specs.built}</p>
-                   </div>
-                   <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                      <p className="text-xs text-slate-500 mb-1">Climatisation</p>
-                      <p className="font-semibold text-slate-900">Oui</p>
-                   </div>
-                   <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                      <p className="text-xs text-slate-500 mb-1">Parking</p>
-                      <p className="font-semibold text-slate-900">2 Places</p>
-                   </div>
-                   <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                      <p className="text-xs text-slate-500 mb-1">Sécurité</p>
-                      <p className="font-semibold text-slate-900">24/7</p>
-                   </div>
-                </div>
-             </CardContent>
-          </Card>
+                  <div className="flex items-center gap-2 text-slate-600 mb-6">
+                     <MapPin size={18} className="text-orange-500"/>
+                     <span className="font-medium">{property.address}, {property.city}</span>
+                  </div>
 
-          {/* Historique */}
-          <Card>
-             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                   <History size={18} className="text-slate-400"/> Historique Récent
-                </CardTitle>
-             </CardHeader>
-             <CardContent>
-                <div className="space-y-4">
-                   <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                      <div className="flex items-center gap-3">
-                         <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600"><Wallet size={14}/></div>
-                         <div><p className="text-sm font-medium">Loyer reçu</p><p className="text-xs text-slate-500">05 Nov 2024</p></div>
-                      </div>
-                      <span className="text-sm font-bold text-slate-900">+ {formatCFA(1200000)}</span>
-                   </div>
-                   <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                      <div className="flex items-center gap-3">
-                         <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600"><Wrench size={14} /></div>
-                         <div><p className="text-sm font-medium">Maintenance (Fuite)</p><p className="text-xs text-slate-500">28 Oct 2024</p></div>
-                      </div>
-                      <span className="text-sm font-bold text-red-600">- {formatCFA(45000)}</span>
-                   </div>
-                </div>
-             </CardContent>
-          </Card>
-        </div>
+                  {/* Specs Grid (Caché pour un Immeuble global car non pertinent ?) */}
+                  {!isBuilding && (
+                     <div className="grid grid-cols-3 gap-4 py-6 border-t border-slate-100">
+                        <div className="flex flex-col items-center justify-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                           <Maximize size={20} className="text-slate-400 mb-2"/>
+                           <span className="font-bold text-slate-900">{property.surface || "-"} m²</span>
+                           <span className="text-[10px] text-slate-500 uppercase font-bold mt-1">Surface</span>
+                        </div>
+                        <div className="flex flex-col items-center justify-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                           <BedDouble size={20} className="text-slate-400 mb-2"/>
+                           <span className="font-bold text-slate-900">{property.rooms || "-"}</span>
+                           <span className="text-[10px] text-slate-500 uppercase font-bold mt-1">Pièces</span>
+                        </div>
+                        <div className="flex flex-col items-center justify-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                           <Bath size={20} className="text-slate-400 mb-2"/>
+                           <span className="font-bold text-slate-900">{property.bathrooms || "-"}</span>
+                           <span className="text-[10px] text-slate-500 uppercase font-bold mt-1">SDB</span>
+                        </div>
+                     </div>
+                  )}
+               </CardContent>
+            </Card>
 
-        {/* 3. COLONNE DROITE : Gestion & Locataire */}
-        <div className="space-y-6">
-           
-           {/* Carte Financière */}
-           <Card className="bg-slate-900 text-white border-slate-800">
-              <CardContent className="p-6">
-                 <div className="flex items-center gap-2 mb-6 opacity-80">
-                    <TrendingUp size={18} className="text-green-400" />
-                    <span className="text-sm font-medium">Performance Financière</span>
-                 </div>
-                 <div className="mb-6">
-                    <p className="text-sm text-slate-400 mb-1">Loyer Mensuel</p>
-                    <p className="text-3xl font-bold text-white">{formatCFA(property.price)}</p>
-                 </div>
-                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700">
-                    <div>
-                       <p className="text-xs text-slate-400">Rentabilité</p>
-                       <p className="text-lg font-semibold text-green-400">{property.financials.yield}</p>
-                    </div>
-                    <div>
-                       <p className="text-xs text-slate-400">Revenus (Année)</p>
-                       <p className="text-lg font-semibold text-white">14.4M</p>
-                    </div>
-                 </div>
-              </CardContent>
-           </Card>
+            {/* --- SECTION LOTS (VISIBLE SI IMMEUBLE) --- */}
+            {isBuilding && (
+               <Card>
+                  <CardHeader className="border-b border-slate-100 pb-3 flex flex-row items-center justify-between">
+                     <CardTitle className="text-lg font-bold flex items-center gap-2">
+                        <Grid size={20} className="text-blue-600"/> Composition de l'Immeuble
+                     </CardTitle>
+                     <Link href={`/properties/new?parentId=${property.id}&parentName=${encodeURIComponent(property.title)}`}>
+                        <Button size="sm" className="bg-blue-600 text-white">
+                           <Plus size={16} className="mr-2"/> Ajouter un lot
+                        </Button>
+                     </Link>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                     {property.lots.length > 0 ? (
+                        <div className="divide-y divide-slate-100">
+                           {property.lots.map((lot) => (
+                              <Link key={lot.id} href={`/properties/${lot.id}`} className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors group">
+                                 <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-white group-hover:shadow-sm transition-all">
+                                       <Building2 size={20}/>
+                                    </div>
+                                    <div>
+                                       <p className="font-bold text-slate-900">{lot.title}</p>
+                                       <p className="text-xs text-slate-500">{PROPERTY_TYPE_LABELS[lot.type]} • {formatCurrency(lot.price)}</p>
+                                    </div>
+                                 </div>
+                                 <div className="flex items-center gap-3">
+                                    {lot.tenants.length > 0 ? (
+                                       <Badge variant="success" className="bg-green-100 text-green-700 border-none">Occupé</Badge>
+                                    ) : (
+                                       <Badge variant="secondary" className="bg-slate-100 text-slate-500 border-none">Vacant</Badge>
+                                    )}
+                                    <ArrowRight size={16} className="text-slate-300 group-hover:text-blue-600"/>
+                                 </div>
+                              </Link>
+                           ))}
+                        </div>
+                     ) : (
+                        <div className="p-8 text-center text-slate-500">
+                           <p className="mb-2">Aucun lot créé pour cet immeuble.</p>
+                           <p className="text-xs text-slate-400">Ajoutez des appartements, chambres ou magasins.</p>
+                        </div>
+                     )}
+                  </CardContent>
+               </Card>
+            )}
 
-           {/* Carte Locataire */}
-           <Card>
-              <CardHeader>
-                 <CardTitle>Locataire Actuel</CardTitle>
-              </CardHeader>
-              <CardContent>
-                 <div className="flex items-center gap-4 mb-6">
-                    <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
-                       {property.tenant.name.charAt(0)}
-                    </div>
-                    <div>
-                       <p className="font-bold text-slate-900">{property.tenant.name}</p>
-                       <Badge variant="success" className="mt-1 text-[10px] px-1.5 py-0">{property.tenant.paymentStatus}</Badge>
-                    </div>
-                 </div>
-                 
-                 <div className="space-y-3">
-                    <a href={`tel:${property.tenant.phone}`} className="flex items-center gap-3 text-sm text-slate-600 hover:text-blue-600 transition-colors p-2 hover:bg-slate-50 rounded-lg">
-                       <Phone size={16} /> {property.tenant.phone}
-                    </a>
-                    <a href={`mailto:${property.tenant.email}`} className="flex items-center gap-3 text-sm text-slate-600 hover:text-blue-600 transition-colors p-2 hover:bg-slate-50 rounded-lg">
-                       <Mail size={16} /> {property.tenant.email}
-                    </a>
-                    <button className="flex items-center gap-3 text-sm text-slate-600 hover:text-blue-600 transition-colors p-2 hover:bg-slate-50 rounded-lg w-full text-left">
-                       <FileText size={16} /> Voir le contrat
-                    </button>
-                 </div>
+            {property.description && (
+               <Card>
+                  <CardHeader><CardTitle className="text-base">Description</CardTitle></CardHeader>
+                  <CardContent><p className="text-slate-600 leading-relaxed">{property.description}</p></CardContent>
+               </Card>
+            )}
+         </div>
 
-                 <div className="mt-6 pt-4 border-t border-slate-100">
-                    <p className="text-xs text-slate-400 mb-2">Entrée le : {property.tenant.entryDate}</p>
-                    <Button variant="outline" size="sm" className="w-full">Historique complet</Button>
-                 </div>
-              </CardContent>
-           </Card>
-        </div>
+         {/* COLONNE DROITE */}
+         <div className="space-y-6">
+            
+            {/* Si c'est un lot simple : on affiche le locataire. Si Immeuble : on affiche le résumé */}
+            {!isBuilding && (
+               <Card className="border-l-4 border-l-blue-600 shadow-sm">
+                  <CardHeader className="pb-2">
+                     <CardTitle className="text-sm font-bold uppercase text-slate-500 flex items-center gap-2">
+                        <User size={16}/> Locataire Actuel
+                     </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                     {property.tenants && property.tenants.length > 0 ? (
+                        <div className="flex items-center gap-4 py-2">
+                           <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border-2 border-white shadow-sm">
+                              {property.tenants[0].firstName.charAt(0)}
+                           </div>
+                           <div>
+                              <p className="font-bold text-slate-900">{property.tenants[0].firstName} {property.tenants[0].lastName}</p>
+                              <Link href={`/tenants/${property.tenants[0].id}`} className="text-xs text-blue-600 hover:underline font-medium">Voir le dossier</Link>
+                           </div>
+                        </div>
+                     ) : (
+                        <div className="text-center py-6 text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                           <p className="text-sm">Aucun locataire</p>
+                           <Link href="/tenants/new"><Button size="sm" variant="ghost" className="text-blue-600 p-0 h-auto font-bold hover:underline">Ajouter un locataire</Button></Link>
+                        </div>
+                     )}
+                  </CardContent>
+               </Card>
+            )}
 
+            {/* Raccourcis Rapides */}
+            <Card>
+               <CardHeader className="pb-3"><CardTitle className="text-sm font-bold text-slate-900">Gestion</CardTitle></CardHeader>
+               <CardContent className="space-y-2">
+                  <Button variant="ghost" className="w-full justify-start text-slate-600 h-10 hover:bg-slate-50 border border-transparent hover:border-slate-200">
+                     <FileText size={16} className="mr-3 text-slate-400"/> Contrats & Baux
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start text-slate-600 h-10 hover:bg-slate-50 border border-transparent hover:border-slate-200">
+                     <Wallet size={16} className="mr-3 text-slate-400"/> Historique Paiements
+                  </Button>
+               </CardContent>
+            </Card>
+
+         </div>
       </div>
     </div>
   );

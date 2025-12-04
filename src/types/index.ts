@@ -1,42 +1,31 @@
-export type PropertyStatus = "Vacant" | "Loué" | "Travaux";
-export type TenantStatus = "À jour" | "En retard" | "En attente";
-export type PaymentStatus = "Payé" | "Impayé" | "Retard";
+// Ré-exporte tout depuis tes modèles pour n'avoir qu'un seul import
+export * from "@/lib/immo-connect-models";
 
-export interface Property {
-  id: string;
+// Ajouts spécifiques pour l'UI (qui ne sont pas dans la DB)
+export interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+  highlight?: boolean;
+}
+
+export interface SidebarGroup {
+  category: string;
+  items: NavItem[];
+}
+
+// Types pour les formulaires
+export interface PropertyFormData {
   title: string;
+  type: string;
   address: string;
   price: number;
-  currency: string; // NOUVEAU CHAMP (ex: 'XOF', 'EUR')
-  status: PropertyStatus;
-  type: string;
-  specs: {
-    beds: number;
-    baths: number;
-    area: number;
-  };
-  image?: string;
+  surface: number;
 }
 
-// Ajoute aussi currency ici si tu veux gérer des paiements multi-devises
-export interface Payment {
-  id: string;
-  tenantId: string;
-  propertyId: string;
-  amount: number;
-  currency: string; // NOUVEAU CHAMP
-  date: string;
-  status: PaymentStatus;
-}
-
-// ... reste du fichier (Tenant, etc.)
-export interface Tenant {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  propertyId: string;
-  status: TenantStatus;
-  rentAmount: number;
-  currency: string; // Utile pour savoir dans quelle devise il paie
+// Types pour l'API (Réponses standard)
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
 }

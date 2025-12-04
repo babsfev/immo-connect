@@ -1,6 +1,6 @@
 "use client";
 
-import React, { InputHTMLAttributes } from "react";
+import React, { InputHTMLAttributes, useId } from "react"; // 1. Import useId
 import { cn } from "@/lib/utils";
 
 type InputProps = InputHTMLAttributes<HTMLInputElement> & {
@@ -19,7 +19,9 @@ export default function Input({
   id,
   ...props
 }: InputProps) {
-  const inputId = id || `input-${Math.random().toString(36).slice(2, 9)}`;
+  // 2. Utilisation de useId() pour un ID stable
+  const generatedId = useId();
+  const inputId = id || generatedId;
 
   return (
     <div className={cn("w-full", wrapperClassName)}>
