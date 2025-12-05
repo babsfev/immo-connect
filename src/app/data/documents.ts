@@ -1,7 +1,8 @@
 import { db } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/authz";
+// ❌ On enlève l'import de cache
 
-export async function getPaymentForReceipt(paymentId: string) {
+export async function getPaymentForReceipt(paymentId: string) { // ❌ Plus de cache()
   const user = await getCurrentUser();
   if (!user) return null;
 
@@ -13,12 +14,7 @@ export async function getPaymentForReceipt(paymentId: string) {
         include: {
           property: {
             include: {
-              // On récupère les infos agence
-              manager: {
-                include: {
-                  agencySettings: true 
-                }
-              }
+              manager: { include: { agencySettings: true } }
             }
           }
         }
@@ -26,7 +22,6 @@ export async function getPaymentForReceipt(paymentId: string) {
     }
   });
 
-  // SÉCURITÉ STRICTE : Vérification du propriétaire
   if (!payment || payment.lease.property.managerId !== user.userId) {
     return null;
   }

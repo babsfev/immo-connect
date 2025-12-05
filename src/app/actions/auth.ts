@@ -100,7 +100,7 @@ export const resetPassword = createSafeAction(
   async (_, data) => {
     const supabase = await createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/auth/update-password`,
+      redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/update-password`,
     });
 
     if (error) return actionResult.error("Impossible d'envoyer l'email.");
