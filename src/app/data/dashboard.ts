@@ -13,7 +13,7 @@ export async function getDashboardData() {
 
   // --- 2. RÉCUPÉRATION DES DONNÉES ---
   
-  // A. Propriétés (Pour les compteurs et l'IA)
+  // A. Propriétés
   const properties = await db.property.findMany({
     where: { managerId: user.userId }, // SoftDelete géré par l'extension
     include: {
@@ -22,7 +22,7 @@ export async function getDashboardData() {
     }
   });
 
-  // B. Paiements (Pour les finances)
+  // B. Paiements
   const payments = await db.payment.findMany({
     where: {
       lease: { property: { managerId: user.userId } }
@@ -142,8 +142,8 @@ export async function getDashboardData() {
       totalProperties,
     },
     chartData,
-    recentTenants,      // <--- Connecté au widget Locataires
-    propertyToOptimize, // <--- Connecté au widget IA
-    recentNotifications // <--- Connecté au widget Notifications
+    recentTenants,      
+    propertyToOptimize, 
+    recentNotifications 
   };
 }
