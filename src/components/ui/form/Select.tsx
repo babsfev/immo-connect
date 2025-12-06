@@ -38,16 +38,15 @@ export function Select({
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState(defaultValue);
   const [search, setSearch] = useState("");
-
   const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedOption = options.find((opt) => opt.value === selected);
-
+  
+  // Filtrage intelligent
   const filteredOptions = options.filter((opt) =>
     opt.label.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -66,95 +65,109 @@ export function Select({
   };
 
   return (
-    <div className={cn("relative w-full", className)} ref={containerRef}>
-
+    <div className={cn("space-y-1.5 w-full", className)} ref={containerRef}>
+      
+      {/* Label identique à Input.tsx */}
       {label && (
-        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
+        <label className={cn(
+          "text-xs font-bold uppercase tracking-wider block",
+          error ? "text-red-600" : "text-slate-500"
+        )}>
           {label}
         </label>
       )}
 
+      {/* Input caché pour les formulaires HTML/Server Actions */}
       <input type="hidden" name={name} value={selected} />
 
-      <div
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={cn(
-          "flex items-center justify-between h-11 rounded-xl border bg-white px-3 py-2 text-sm cursor-pointer",
-          isOpen ? "border-blue-500 ring-4 ring-blue-500/10" : "border-slate-200 hover:border-slate-300",
-          disabled && "opacity-50 cursor-not-allowed bg-slate-50",
-          error && "border-red-500 bg-red-50/10"
-        )}
-      >
-        <div className="flex items-center gap-2 truncate">
-          {selectedOption?.icon && (
-            <selectedOption.icon size={16} className="text-slate-500" />
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+          className={cn(
+            "flex items-center justify-between w-full h-11 rounded-xl border px-3 py-2 text-sm transition-all outline-none",
+            isOpen ? "border-slate-900 ring-2 ring-slate-900/10" : "border-slate-200 hover:border-slate-300",
+            disabled && "opacity-50 cursor-not-allowed bg-slate-50",
+            error && "border-red-300 focus:border-red-500 text-red-900 bg-red-50/5",
+            !selected && "text-slate-400",
+            "bg-white text-left"
           )}
-          <span className={cn(!selected && "text-slate-400")}>
-            {selectedOption ? selectedOption.label : placeholder}
-          </span>
-        </div>
+        >
+          <div className="flex items-center gap-2.5 truncate">
+            {selectedOption?.icon && (
+              <selectedOption.icon size={16} className="text-slate-500 shrink-0" />
+            )}
+            <span className={cn("truncate", !selectedOption && "text-slate-400")}>
+              {selectedOption ? selectedOption.label : placeholder}
+            </span>
+          </div>
 
-        <ChevronDown
-          size={16}
-          className={cn("text-slate-400 transition-transform", isOpen && "rotate-180")}
-        />
-      </div>
+          <ChevronDown
+            size={16}
+            className={cn("text-slate-400 shrink-0 transition-transform duration-200", isOpen && "rotate-180")}
+          />
+        </button>
 
-      {isOpen && (
-        <div className="absolute z-50 mt-1 w-full rounded-xl border border-slate-100 bg-white shadow-xl animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
-
-          {(searchable || options.length > 8) && (
-            <div className="p-2 border-b bg-white sticky top-0">
-              <div className="relative">
-                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Rechercher..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full h-9 rounded-lg bg-slate-50 pl-8 pr-3 text-sm outline-none focus:ring-2 focus:ring-blue-100"
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="max-h-60 overflow-y-auto p-1">
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((opt) => (
-                <div
-                  key={opt.value}
-                  onClick={() => handleSelect(opt.value)}
-                  className={cn(
-                    "flex items-center justify-between px-3 py-2.5 rounded-lg text-sm cursor-pointer",
-                    selected === opt.value
-                      ? "bg-blue-50 text-blue-700 font-medium"
-                      : "text-slate-700 hover:bg-slate-50"
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    {opt.icon && (
-                      <opt.icon
-                        size={16}
-                        className={selected === opt.value ? "text-blue-500" : "text-slate-400"}
-                      />
-                    )}
-                    {opt.label}
-                  </div>
-                  {selected === opt.value && <Check size={16} className="text-blue-600" />}
+        {/* Dropdown Menu */}
+        {isOpen && (
+          <div className="absolute z-50 mt-1.5 w-full rounded-xl border border-slate-100 bg-white shadow-xl shadow-slate-200/50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden ring-1 ring-slate-900/5">
+            
+            {(searchable || options.length > 6) && (
+              <div className="p-2 border-b border-slate-50 bg-slate-50/50 sticky top-0">
+                <div className="relative">
+                  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Filtrer..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    autoFocus
+                    className="w-full h-8 rounded-lg bg-white border border-slate-200 pl-8 pr-3 text-xs outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-slate-300"
+                  />
                 </div>
-              ))
-            ) : (
-              <div className="p-4 text-center text-xs text-slate-400">
-                Aucun résultat.
               </div>
             )}
-          </div>
-        </div>
-      )}
 
+            <div className="max-h-60 overflow-y-auto p-1.5 space-y-0.5 custom-scrollbar">
+              {filteredOptions.length > 0 ? (
+                filteredOptions.map((opt) => (
+                  <div
+                    key={opt.value}
+                    onClick={() => handleSelect(opt.value)}
+                    className={cn(
+                      "flex items-center justify-between px-3 py-2 rounded-lg text-sm cursor-pointer transition-colors",
+                      selected === opt.value
+                        ? "bg-slate-900 text-white font-medium"
+                        : "text-slate-700 hover:bg-slate-50"
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5 truncate">
+                      {opt.icon && (
+                        <opt.icon
+                          size={16}
+                          className={cn(selected === opt.value ? "text-white/70" : "text-slate-400")}
+                        />
+                      )}
+                      <span className="truncate">{opt.label}</span>
+                    </div>
+                    {selected === opt.value && <Check size={14} className="text-white" />}
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-xs text-slate-400 italic">
+                  Aucun résultat.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Message d'erreur */}
       {error && (
-        <p className="text-[11px] text-red-500 flex items-center gap-1 mt-1.5">
-          <AlertCircle size={12} /> {error}
+        <p className="text-[11px] font-medium text-red-600 flex items-center gap-1.5 animate-in slide-in-from-top-1">
+           <span className="w-1 h-1 rounded-full bg-red-500 inline-block" /> 
+           {error}
         </p>
       )}
     </div>

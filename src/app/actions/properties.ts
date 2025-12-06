@@ -16,22 +16,19 @@ function slugify(text: string) {
     .replace(/^-|-$/g, "");
 }
 
-// --- HELPER : DÉTECTION DE CYCLE (SHERLOCK HOLMES) ---
-// Vérifie si "targetId" est un ancêtre de "startId"
+// --- HELPER : DÉTECTION DE CYCLE ---
 async function isDescendant(candidateParentId: string, childId: string) {
   let currentId = candidateParentId;
   
-  // On remonte la chaîne des parents jusqu'en haut
-  // (Limité à 10 niveaux par sécurité pour éviter une boucle infinie ici aussi)
   for (let i = 0; i < 10; i++) {
-    if (currentId === childId) return true; // Cycle trouvé !
+    if (currentId === childId) return true; 
     
     const parent = await db.property.findUnique({
       where: { id: currentId },
       select: { parentId: true }
     });
     
-    if (!parent || !parent.parentId) break; // Pas de parent, on arrête
+    if (!parent || !parent.parentId) break; 
     currentId = parent.parentId;
   }
   return false;
@@ -66,6 +63,12 @@ const PropertySchema = z.object({
 export const createProperty = createSafeAction(
   PropertySchema,
   async ({ userId }, data) => {
+    
+    // 👇 CORRECTION 1 : Type Guard pour userId
+    if (!userId) {
+      return actionResult.error("Utilisateur non identifié.");
+    }
+
     const base = slugify(data.title);
     const slug = `${base}-${Date.now().toString().slice(-4)}`;
 
@@ -73,7 +76,7 @@ export const createProperty = createSafeAction(
       data: {
         ...data,
         slug,
-        managerId: userId,
+        managerId: userId, // TypeScript est content maintenant (string assurée)
         currency: "XOF",
         status: "AVAILABLE",
         images: data.coverImage ? [data.coverImage] : [],
@@ -93,7 +96,7 @@ export const createProperty = createSafeAction(
 );
 
 // ----------------------------------------------------
-// 2️⃣ ACTION : UPDATE (SÉCURISÉE)
+// 2️⃣ ACTION : UPDATE
 // ----------------------------------------------------
 
 const UpdatePropertySchema = PropertySchema.extend({
@@ -104,6 +107,11 @@ export const updateProperty = createSafeAction(
   UpdatePropertySchema,
   async ({ userId }, data) => {
 
+    // 👇 CORRECTION 2 : Type Guard pour userId
+    if (!userId) {
+      return actionResult.error("Utilisateur non identifié.");
+    }
+
     // 1. Sécurité de base
     if (data.id === data.parentId) {
       return actionResult.error("Un bien ne peut pas être lié à lui-même.");
@@ -113,13 +121,17 @@ export const updateProperty = createSafeAction(
     if (data.parentId) {
        const cycleDetected = await isDescendant(data.parentId, data.id);
        if (cycleDetected) {
-          return actionResult.error("Impossible : Ce changement créerait une boucle infinie (l'enfant deviendrait le parent de son parent).");
+          return actionResult.error("Impossible : Boucle infinie détectée.");
        }
     }
 
     // 3. Vérification Propriété
+    // On utilise findFirst au lieu de findUnique pour la contrainte composite (id + managerId)
     const existing = await db.property.findFirst({
-      where: { id: data.id, managerId: userId },
+      where: { 
+        id: data.id, 
+        managerId: userId // Safe string
+      },
     });
 
     if (!existing) {
@@ -162,17 +174,25 @@ export const deleteProperty = createSafeAction(
   DeletePropertySchema,
   async ({ userId }, { id }) => {
 
+    // 👇 CORRECTION 3 : Type Guard pour userId
+    if (!userId) {
+      return actionResult.error("Utilisateur non identifié.");
+    }
+
     // Anti-orphelins
     const children = await db.property.count({
       where: { parentId: id },
     });
 
     if (children > 0) {
-      return actionResult.error(`Impossible de supprimer : ce bien contient ${children} lots. Supprimez-les d'abord.`);
+      return actionResult.error(`Impossible : ce bien contient ${children} lots. Supprimez-les d'abord.`);
     }
 
     const result = await db.property.deleteMany({
-      where: { id, managerId: userId },
+      where: { 
+        id, 
+        managerId: userId // Safe string
+      },
     });
 
     if (result.count === 0) {

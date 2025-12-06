@@ -1,31 +1,25 @@
-// Ré-exporte tout depuis tes modèles pour n'avoir qu'un seul import
-export * from "@/lib/immo-connect-models";
-
-// Ajouts spécifiques pour l'UI (qui ne sont pas dans la DB)
-export interface NavItem {
-  label: string;
-  href: string;
-  icon: React.ElementType;
-  highlight?: boolean;
+export interface UserProfile {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  role: string;
+  avatar?: string | null;
 }
 
-export interface SidebarGroup {
-  category: string;
-  items: NavItem[];
-}
-
-// Types pour les formulaires
-export interface PropertyFormData {
+export interface Property {
+  id: string;
   title: string;
-  type: string;
   address: string;
   price: number;
-  surface: number;
+  status: "AVAILABLE" | "RENTED" | "MAINTENANCE";
+  coverImage?: string | null;
 }
 
-// Types pour l'API (Réponses standard)
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
+export interface Tenant {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
 }

@@ -1,8 +1,11 @@
-// On exporte tout ce qui est dans le dossier
-export { default as Input } from "./Input";
-export { default as Textarea } from "./Textarea";
-export { Switch } from "./Switch"; // Attention si export default ou nommé
-export { CurrencyInput } from "./CurrencyInput";
-export { ImageUpload } from "./ImageUpload";
+// Exports Nommés (Standard)
+export { Input } from "./Input";
+export { Select } from "./Select";
 export { Label } from "./Label";
 export { ErrorMessage } from "./ErrorMessage";
+export { ImageUpload } from "./ImageUpload";
+export { Switch } from "./Switch";
+export { Textarea } from "./Textarea";
+
+// Export par défaut spécifique (car CurrencyInput a un export default dans le fichier)
+export { default as CurrencyInput } from "./CurrencyInput";

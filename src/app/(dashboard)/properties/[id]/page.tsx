@@ -12,10 +12,13 @@ import { Badge } from "@/components/ui/Badge";
 import { getPropertyById } from "@/app/data/properties";
 import { formatCurrency } from "@/lib/utils";
 import { PROPERTY_STATUS_LABELS, PROPERTY_TYPE_LABELS } from "@/lib/constants";
-import DeletePropertyButton from "@/components/properties/DeletePropertyButton";
+// 👇 CORRECTION ICI : Ajout des accolades { }
+import { DeletePropertyButton } from "@/components/properties/DeletePropertyButton";
 
-export default async function PropertyDetailsPage({ params }: { params: { id: string } }) {
-  const property = await getPropertyById(params.id);
+export default async function PropertyDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  // Gestion correcte des params asynchrones (Next.js 15/16)
+  const { id } = await params;
+  const property = await getPropertyById(id);
 
   if (!property) notFound();
 
@@ -35,7 +38,8 @@ export default async function PropertyDetailsPage({ params }: { params: { id: st
            <ArrowLeft size={16}/> Retour à la liste
         </Link>
         <div className="flex gap-2">
-           <DeletePropertyButton id={property.id} title={property.title} />
+           {/* Utilisation du composant avec les accolades */}
+           <DeletePropertyButton propertyId={property.id} />
            <Link href={`/properties/${property.id}/edit`}>
               <Button variant="outline" className="bg-white border-slate-200 text-slate-700">
                  <Edit size={16} className="mr-2"/> Modifier
@@ -89,7 +93,7 @@ export default async function PropertyDetailsPage({ params }: { params: { id: st
                      <span className="font-medium">{property.address}, {property.city}</span>
                   </div>
 
-                  {/* Specs Grid (Caché pour un Immeuble global car non pertinent ?) */}
+                  {/* Specs Grid */}
                   {!isBuilding && (
                      <div className="grid grid-cols-3 gap-4 py-6 border-t border-slate-100">
                         <div className="flex flex-col items-center justify-center p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -171,7 +175,6 @@ export default async function PropertyDetailsPage({ params }: { params: { id: st
          {/* COLONNE DROITE */}
          <div className="space-y-6">
             
-            {/* Si c'est un lot simple : on affiche le locataire. Si Immeuble : on affiche le résumé */}
             {!isBuilding && (
                <Card className="border-l-4 border-l-blue-600 shadow-sm">
                   <CardHeader className="pb-2">
@@ -200,7 +203,6 @@ export default async function PropertyDetailsPage({ params }: { params: { id: st
                </Card>
             )}
 
-            {/* Raccourcis Rapides */}
             <Card>
                <CardHeader className="pb-3"><CardTitle className="text-sm font-bold text-slate-900">Gestion</CardTitle></CardHeader>
                <CardContent className="space-y-2">

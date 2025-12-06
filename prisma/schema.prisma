@@ -14,52 +14,52 @@ datasource db {
 
 enum Role {
   ADMIN
-  AGENCY     // Agence (Gestionnaire)
-  AGENT      // Agent commercial
-  OWNER      // Propriétaire Bailleur
-  TENANT     // Locataire
-  VENDOR     // Prestataire (Plombier...)
-  PROSPECT   // Chercheur de bien
-  NOTARY     // Notaire
+  AGENCY // Agence (Gestionnaire)
+  AGENT // Agent commercial
+  OWNER // Propriétaire Bailleur
+  TENANT // Locataire
+  VENDOR // Prestataire (Plombier...)
+  PROSPECT // Chercheur de bien
+  NOTARY // Notaire
   ACCOUNTANT // Comptable
-  CONCIERGE  // Gardien
+  CONCIERGE // Gardien
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String
-  firstName     String?
-  lastName      String?
-  avatar        String?
-  phone         String?   // Format Sénégalais (+221...)
-  
+  id        String  @id @default(cuid())
+  email     String  @unique
+  password  String
+  firstName String?
+  lastName  String?
+  avatar    String?
+  phone     String? // Format Sénégalais (+221...)
+
   // Multi-rôles : Un user peut être Proprio ET Locataire
-  roles         Role[]    @default([PROSPECT]) 
-  
+  roles Role[] @default([PROSPECT])
+
   // Sécurité & KYC
-  isVerified    Boolean   @default(false)
-  kycDocuments  String[]  // URLs CNI, NINEA...
+  isVerified   Boolean  @default(false)
+  kycDocuments String[] // URLs CNI, NINEA...
 
   // RELATIONS
-  managedProperties Property[]   @relation("ManagerProperties")
-  leases            Lease[]      @relation("TenantLeases")
+  managedProperties Property[]    @relation("ManagerProperties")
+  leases            Lease[]       @relation("TenantLeases")
   applications      Application[]
-  savedProperties   Property[]   @relation("UserFavorites")
-  
-  createdTickets    Ticket[]     @relation("TicketCreator")
-  assignedTickets   Ticket[]     @relation("TicketAssignee")
-  
-  messages          Message[]
-  auditLogs         AuditLog[]
-  
-  // RELATIONS SYSTÈME
-  notifications     Notification[]
-  agencySettings    AgencySettings? // Relation One-to-One
+  savedProperties   Property[]    @relation("UserFavorites")
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime? // Soft Delete (Corbeille)
+  createdTickets  Ticket[] @relation("TicketCreator")
+  assignedTickets Ticket[] @relation("TicketAssignee")
+
+  messages  Message[]
+  auditLogs AuditLog[]
+
+  // RELATIONS SYSTÈME
+  notifications  Notification[]
+  agencySettings AgencySettings? // Relation One-to-One
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft Delete (Corbeille)
 
   @@index([email])
 }
@@ -78,14 +78,14 @@ enum PropertyType {
   APARTMENT
   HOUSE
   STUDIO
-  ROOM            // Chambre simple
+  ROOM // Chambre simple
   OFFICE
-  RETAIL          // Boutique / Magasin
-  WAREHOUSE       // Entrepôt
+  RETAIL // Boutique / Magasin
+  WAREHOUSE // Entrepôt
   INDUSTRIAL
   LAND
   PARKING
-  BUILDING        // Immeuble entier / Maison de rapport
+  BUILDING // Immeuble entier / Maison de rapport
 }
 
 enum PropertyUsage {
@@ -95,65 +95,65 @@ enum PropertyUsage {
 }
 
 model Property {
-  id          String         @id @default(cuid())
-  slug        String?        @unique
+  id          String  @id @default(cuid())
+  slug        String? @unique
   title       String
-  description String?        @db.Text
+  description String? @db.Text
   address     String
   city        String
-  
+
   // Finances
-  price       Float          // Loyer
-  currency    String         @default("XOF")
-  vatRate     Float          @default(0) // TVA (18% si commercial)
-  keyMoney    Float?         // Pas de porte / Droit au bail
-  
+  price    Float // Loyer
+  currency String @default("XOF")
+  vatRate  Float  @default(0) // TVA (18% si commercial)
+  keyMoney Float? // Pas de porte / Droit au bail
+
   // Typologie
-  type        PropertyType
-  usage       PropertyUsage  @default(RESIDENTIAL)
-  status      PropertyStatus @default(DRAFT)
-  
+  type   PropertyType
+  usage  PropertyUsage  @default(RESIDENTIAL)
+  status PropertyStatus @default(DRAFT)
+
   // Specs Résidentiel
-  surface     Float?
-  rooms       Int?
-  bathrooms   Int?
-  
+  surface   Float?
+  rooms     Int?
+  bathrooms Int?
+
   // Specs Commercial
   retailArea    Float?
   showcase      Float?
   ceilingHeight Float?
-  hasExtraction Boolean      @default(false)
+  hasExtraction Boolean @default(false)
   zoning        String?
 
-  features    String[]
-  
+  features String[]
+
   // GESTION IMAGES
-  coverImage  String?       // La photo de couverture (Légère)
-  images      String[]      // La galerie complète (Tableau d'URLs)
+  coverImage String? // La photo de couverture (Légère)
+  images     String[] // La galerie complète (Tableau d'URLs)
 
   // RELATION PARENT / ENFANT (Pour les Immeubles Multi-Lots)
-  parentId    String?       // ID de l'immeuble parent (si c'est un lot)
-  parent      Property?     @relation("BuildingLots", fields: [parentId], references: [id])
-  lots        Property[]    @relation("BuildingLots") // Liste des appartements/boutiques de l'immeuble
+  parentId String? // ID de l'immeuble parent (si c'est un lot)
+  parent   Property?  @relation("BuildingLots", fields: [parentId], references: [id])
+  lots     Property[] @relation("BuildingLots") // Liste des appartements/boutiques de l'immeuble
 
   // Relations
-  managerId   String
-  manager     User           @relation("ManagerProperties", fields: [managerId], references: [id])
-  
-  favoritedBy User[]         @relation("UserFavorites")
-  
-  tenants     Tenant[]
-  leases      Lease[]
-  expenses    Expense[]
-  tickets     Ticket[]
-  documents   Document[]
-  
+  managerId String
+  manager   User   @relation("ManagerProperties", fields: [managerId], references: [id])
+
+  favoritedBy User[] @relation("UserFavorites")
+
+  tenants   Tenant[]
+  leases    Lease[]
+  expenses  Expense[]
+  tickets   Ticket[]
+  documents Document[]
+
   colocListings RoomListing[]
   applications  Application[]
-  
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  deletedAt   DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([city])
   @@index([status])
@@ -173,41 +173,41 @@ enum GenderPreference {
 enum UtilityType {
   INCLUDED
   SHARED
-  PREPAID     // Woyofal
+  PREPAID // Woyofal
 }
 
 model RoomListing {
-  id            String           @id @default(cuid())
+  id            String   @id @default(cuid())
   title         String
   description   String?
   price         Float
   deposit       Float?
-  availableFrom DateTime         @default(now())
-  
-  surface       Float
-  isFurnished   Boolean          @default(false)
-  hasPrivateBath Boolean         @default(false)
-  hasBalcony    Boolean          @default(false)
-  hasAC         Boolean          @default(false)
+  availableFrom DateTime @default(now())
+
+  surface        Float
+  isFurnished    Boolean @default(false)
+  hasPrivateBath Boolean @default(false)
+  hasBalcony     Boolean @default(false)
+  hasAC          Boolean @default(false)
 
   genderPref    GenderPreference @default(MIXED)
   smokerAllowed Boolean          @default(false)
   petsAllowed   Boolean          @default(false)
   occupation    String?
 
-  electricity   UtilityType      @default(SHARED)
-  water         UtilityType      @default(SHARED)
-  internet      UtilityType      @default(INCLUDED)
-  cleaning      UtilityType      @default(SHARED)
+  electricity UtilityType @default(SHARED)
+  water       UtilityType @default(SHARED)
+  internet    UtilityType @default(INCLUDED)
+  cleaning    UtilityType @default(SHARED)
 
-  propertyId    String
-  property      Property         @relation(fields: [propertyId], references: [id])
-  
-  images        String[]
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
 
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  deletedAt     DateTime?
+  images String[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([price])
   @@index([propertyId])
@@ -223,33 +223,33 @@ enum LeaseStatus {
 }
 
 model Lease {
-  id          String      @id @default(cuid())
-  startDate   DateTime
-  endDate     DateTime
-  rentAmount  Float
-  deposit     Float
-  status      LeaseStatus @default(ACTIVE)
-  
+  id         String      @id @default(cuid())
+  startDate  DateTime
+  endDate    DateTime
+  rentAmount Float
+  deposit    Float
+  status     LeaseStatus @default(ACTIVE)
+
   // Options Futuristes (V2)
   sublettingAllowed Boolean @default(false) // Sous-location autorisée ?
   rentToOwnOption   Boolean @default(false) // Location-vente ?
-  accumulatedCredit Float   @default(0)     // Cagnotte d'achat
-  
-  propertyId  String
-  property    Property    @relation(fields: [propertyId], references: [id])
-  
-  userId      String?
-  user        User?       @relation("TenantLeases", fields: [userId], references: [id])
-  
-  tenantId    String
-  tenant      Tenant      @relation(fields: [tenantId], references: [id])
-  
-  payments    Payment[]
-  documents   Document[]
-  
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  deletedAt   DateTime?
+  accumulatedCredit Float   @default(0) // Cagnotte d'achat
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  userId String?
+  user   User?   @relation("TenantLeases", fields: [userId], references: [id])
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  payments  Payment[]
+  documents Document[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([propertyId])
   @@index([tenantId])
@@ -257,25 +257,25 @@ model Lease {
 }
 
 model Tenant {
-  id          String   @id @default(cuid())
-  firstName   String
-  lastName    String
-  email       String   @unique
-  phone       String
-  job         String?
-  income      Float?
+  id            String  @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String  @unique
+  phone         String
+  job           String?
+  income        Float?
   solvencyScore Int?
 
-  propertyId  String?
-  property    Property? @relation(fields: [propertyId], references: [id])
-  
-  leases      Lease[]
-  payments    Payment[]
+  propertyId String?
+  property   Property? @relation(fields: [propertyId], references: [id])
+
+  leases       Lease[]
+  payments     Payment[]
   applications Application[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deletedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([email])
   @@index([lastName])
@@ -293,47 +293,47 @@ enum AppStatus {
 }
 
 model Application {
-  id            String    @id @default(cuid())
-  
-  userId        String?
-  user          User?     @relation(fields: [userId], references: [id])
+  id String @id @default(cuid())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
 
   applicantName String
   email         String
   phone         String
   income        Float
   message       String?
-  
-  status        AppStatus @default(NEW)
-  score         Int?
-  tags          String[]
-  
-  propertyId    String
-  property      Property  @relation(fields: [propertyId], references: [id])
-  
-  tenantId      String?
-  tenant        Tenant?   @relation(fields: [tenantId], references: [id])
-  
-  guarantor     Guarantor?
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
+  status AppStatus @default(NEW)
+  score  Int?
+  tags   String[]
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  guarantor Guarantor?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([status])
   @@index([propertyId])
 }
 
 model Guarantor {
-  id            String   @id @default(cuid())
-  firstName     String
-  lastName      String
-  phone         String
-  email         String?
-  income        Float
-  relationship  String
-  
-  applicationId String   @unique
+  id           String  @id @default(cuid())
+  firstName    String
+  lastName     String
+  phone        String
+  email        String?
+  income       Float
+  relationship String
+
+  applicationId String      @unique
   application   Application @relation(fields: [applicationId], references: [id])
 }
 
@@ -347,34 +347,59 @@ enum PaymentStatus {
   FAILED
 }
 
-model Payment {
-  id             String        @id @default(cuid())
-  amount         Float         // Montant Dû (Loyer + Charges)
-  receivedAmount Float?        // Montant Perçu (Cumulatif)
-  
-  date           DateTime      // Date d'enregistrement comptable
-  dueDate        DateTime      // Date d'échéance (pour calculer le retard)
-  lastPaymentDate DateTime?    // Date réelle du dernier versement
-  
-  status         PaymentStatus @default(PENDING)
-  method         String?       // WAVE, OM, ESPECES, VIREMENT...
-  
-  proofUrl       String?       // Preuve de paiement (Reçu Wave, Chèque)
-  receiptUrl     String?       // URL du PDF Quittance archivé (Optimisation)
+// --- DANS prisma/schema.prisma ---
 
-  leaseId        String
-  lease          Lease         @relation(fields: [leaseId], references: [id])
-  tenantId       String
-  tenant         Tenant        @relation(fields: [tenantId], references: [id])
-  
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  deletedAt      DateTime?
+model Payment {
+  id             String @id @default(cuid())
+  amount         Float // Montant Total Dû
+  receivedAmount Float? // Cumul (Calculé ou mis à jour via trigger/app)
+
+  dueDate DateTime // Date limite de paiement
+  status  PaymentStatus @default(PENDING)
+
+  // On garde ces champs pour le "dernier état connu" (cache), mais la vérité est dans transactions
+  lastPaymentDate DateTime?
+  method          String? // Méthode du dernier paiement
+  proofUrl        String? // Preuve du dernier paiement
+
+  receiptUrl String?
+
+  // RELATIONS
+  transactions PaymentTransaction[] // <--- NOUVEAU : Historique complet
+
+  leaseId  String
+  lease    Lease  @relation(fields: [leaseId], references: [id])
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([tenantId])
   @@index([leaseId])
   @@index([status])
-  @@index([dueDate])
+}
+
+// --- NOUVEAU MODÈLE ---
+model PaymentTransaction {
+  id String @id @default(cuid())
+
+  amount Float // Montant de CE versement (ex: 25.000)
+  date   DateTime @default(now()) // Date de l'encaissement réel
+
+  method    String // WAVE, OM, ESPECES...
+  reference String? // ID de transaction Wave/OM (facultatif)
+  proofUrl  String? // Capture d'écran spécifique à ce versement
+
+  notes String? // Commentaire (ex: "Déposé par son frère")
+
+  paymentId String
+  payment   Payment @relation(fields: [paymentId], references: [id])
+
+  recordedBy String // ID de l'agent/proprio qui a validé
+
+  createdAt DateTime @default(now())
 }
 
 enum ExpenseCategory {
@@ -394,12 +419,12 @@ model Expense {
   category      ExpenseCategory
   isRecoverable Boolean         @default(false)
   receiptUrl    String?
-  
-  propertyId    String
-  property      Property        @relation(fields: [propertyId], references: [id])
-  
-  createdAt     DateTime        @default(now())
-  deletedAt     DateTime?
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
 
   @@index([propertyId])
   @@index([date])
@@ -426,62 +451,62 @@ model Ticket {
   description String?
   priority    TicketPriority @default(MEDIUM)
   status      TicketStatus   @default(TODO)
-  
-  propertyId  String
-  property    Property       @relation(fields: [propertyId], references: [id])
-  
-  creatorId   String
-  creator     User           @relation("TicketCreator", fields: [creatorId], references: [id])
-  assigneeId  String?
-  assignee    User?          @relation("TicketAssignee", fields: [assigneeId], references: [id])
-  
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  deletedAt   DateTime?
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  creatorId  String
+  creator    User    @relation("TicketCreator", fields: [creatorId], references: [id])
+  assigneeId String?
+  assignee   User?   @relation("TicketAssignee", fields: [assigneeId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([status])
   @@index([propertyId])
 }
 
 model Document {
-  id          String   @id @default(cuid())
-  name        String
-  url         String
-  type        String
-  fileHash    String?  // Empreinte numérique (Anti-fraude)
-  isVerified  Boolean  @default(false)
-  expiryDate  DateTime?
-  
-  propertyId  String?
-  property    Property? @relation(fields: [propertyId], references: [id])
-  leaseId     String?
-  lease       Lease?    @relation(fields: [leaseId], references: [id])
-  
-  createdAt   DateTime @default(now())
-  deletedAt   DateTime?
+  id         String    @id @default(cuid())
+  name       String
+  url        String
+  type       String
+  fileHash   String? // Empreinte numérique (Anti-fraude)
+  isVerified Boolean   @default(false)
+  expiryDate DateTime?
+
+  propertyId String?
+  property   Property? @relation(fields: [propertyId], references: [id])
+  leaseId    String?
+  lease      Lease?    @relation(fields: [leaseId], references: [id])
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
 }
 
 model Message {
-  id        String   @id @default(cuid())
-  content   String
-  read      Boolean  @default(false)
-  
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  
+  id      String  @id @default(cuid())
+  content String
+  read    Boolean @default(false)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
   createdAt DateTime @default(now())
 }
 
 model AuditLog {
-  id        String   @id @default(cuid())
-  action    String   
-  entity    String   
-  entityId  String   
-  userId    String?  
-  user      User?    @relation(fields: [userId], references: [id])
-  details   Json?    
+  id        String  @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String
+  userId    String?
+  user      User?   @relation(fields: [userId], references: [id])
+  details   Json?
   ipAddress String?
-  
+
   createdAt DateTime @default(now())
 
   @@index([userId])
@@ -503,18 +528,18 @@ enum NotificationType {
 }
 
 model Notification {
-  id        String           @id @default(cuid())
-  userId    String
-  user      User             @relation(fields: [userId], references: [id])
-  
-  title     String
-  message   String
-  type      NotificationType @default(INFO)
-  read      Boolean          @default(false)
-  link      String?          // Lien d'action
-  
-  createdAt DateTime         @default(now())
-  
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  title   String
+  message String
+  type    NotificationType @default(INFO)
+  read    Boolean          @default(false)
+  link    String? // Lien d'action
+
+  createdAt DateTime @default(now())
+
   @@index([userId])
   @@index([read])
 }
@@ -524,27 +549,27 @@ model Notification {
 // =========================
 
 model AgencySettings {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id])
-  
-  companyName   String?
-  ninea         String?  // Fiscalité Sénégal
-  rccm          String?
-  address       String?
-  phone         String?
-  email         String?
-  website       String?
-  
-  logoUrl       String?
-  signatureUrl  String?  // Tampon / Signature
-  primaryColor  String?
-  
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  companyName String?
+  ninea       String? // Fiscalité Sénégal
+  rccm        String?
+  address     String?
+  phone       String?
+  email       String?
+  website     String?
+
+  logoUrl      String?
+  signatureUrl String? // Tampon / Signature
+  primaryColor String?
+
   // Coordonnées Bancaires
-  bankName      String?
-  iban          String?
-  swift         String?
+  bankName            String?
+  iban                String?
+  swift               String?
   paymentInstructions String? @db.Text
-  
-  updatedAt     DateTime @updatedAt
+
+  updatedAt DateTime @updatedAt
 }

@@ -32,73 +32,79 @@ export const createTenant = createSafeAction(
     // Vérification de sécurité
     if (!userId) return actionResult.error("Non autorisé.");
 
-    // On utilise une TRANSACTION pour que tout réussisse ou tout échoue ensemble
-    await db.$transaction(async (tx) => {
-      
-      // A. Vérifier si le bien est disponible et appartient au manager
-      const property = await tx.property.findUnique({
-        where: { id: data.propertyId, managerId: userId }
+    try {
+      // On utilise une TRANSACTION pour que tout réussisse ou tout échoue ensemble
+      await db.$transaction(async (tx) => {
+        
+        // A. Vérifier si le bien est disponible et appartient au manager
+        const property = await tx.property.findUnique({
+          where: { id: data.propertyId, managerId: userId }
+        });
+
+        if (!property) throw new Error("Bien introuvable.");
+        if (property.status === "RENTED") throw new Error("Ce bien est déjà loué !");
+
+        // B. Créer le Locataire
+        const tenant = await tx.tenant.create({
+          data: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            phone: data.phone.replace(/\s/g, ''), // Nettoyage
+            propertyId: data.propertyId,
+            solvencyScore: 100, // Score de départ neutre
+          }
+        });
+
+        // C. Créer le Bail (Lease) - 1 an par défaut
+        const startDate = new Date(data.startDate);
+        const endDate = new Date(startDate);
+        endDate.setFullYear(endDate.getFullYear() + 1); 
+
+        const lease = await tx.lease.create({
+          data: {
+            startDate: startDate,
+            endDate: endDate,
+            rentAmount: data.rentAmount,
+            deposit: data.deposit,
+            status: "ACTIVE",
+            propertyId: data.propertyId,
+            tenantId: tenant.id,
+            userId: userId, 
+          }
+        });
+
+        // D. Générer le Premier Paiement (À payer)
+        await tx.payment.create({
+          data: {
+            amount: data.rentAmount,
+            status: "PENDING",
+            // CORRECTION ICI : On utilise dueDate. 'date' n'existe plus dans le schéma V2.
+            dueDate: startDate, 
+            leaseId: lease.id,
+            tenantId: tenant.id,
+            // Pas de receivedAmount ni lastPaymentDate car c'est un nouveau loyer impayé
+          }
+        });
+
+        // E. Mettre à jour le statut du bien
+        await tx.property.update({
+          where: { id: data.propertyId },
+          data: { status: "RENTED" }
+        });
       });
 
-      if (!property) throw new Error("Bien introuvable.");
-      if (property.status === "RENTED") throw new Error("Ce bien est déjà loué !");
+      // F. Rafraîchissement global
+      revalidatePath("/tenants");
+      revalidatePath("/properties");
+      revalidatePath("/dashboard");
+      revalidatePath("/payments");
 
-      // B. Créer le Locataire
-      const tenant = await tx.tenant.create({
-        data: {
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          phone: data.phone.replace(/\s/g, ''), // Nettoyage
-          propertyId: data.propertyId,
-          solvencyScore: 100, // Score de départ neutre
-        }
-      });
+      return actionResult.success("Locataire installé avec succès !");
 
-      // C. Créer le Bail (Lease) - 1 an par défaut
-      const startDate = new Date(data.startDate);
-      const endDate = new Date(startDate);
-      endDate.setFullYear(endDate.getFullYear() + 1); 
-
-      const lease = await tx.lease.create({
-        data: {
-          startDate: startDate,
-          endDate: endDate,
-          rentAmount: data.rentAmount,
-          deposit: data.deposit,
-          status: "ACTIVE",
-          propertyId: data.propertyId,
-          tenantId: tenant.id,
-          userId: userId, 
-        }
-      });
-
-      // D. Générer le Premier Paiement (À payer)
-      await tx.payment.create({
-        data: {
-          amount: data.rentAmount,
-          status: "PENDING",
-          date: startDate, // Date d'émission
-          dueDate: startDate, // Date limite (entrée dans les lieux)
-          leaseId: lease.id,
-          tenantId: tenant.id,
-        }
-      });
-
-      // E. Mettre à jour le statut du bien
-      await tx.property.update({
-        where: { id: data.propertyId },
-        data: { status: "RENTED" }
-      });
-    });
-
-    // F. Rafraîchissement global
-    revalidatePath("/tenants");
-    revalidatePath("/properties");
-    revalidatePath("/dashboard");
-    revalidatePath("/payments");
-
-    return actionResult.success("Locataire installé avec succès !");
+    } catch (e: any) {
+      return actionResult.error(e.message || "Erreur lors de la création du locataire.");
+    }
   },
   { rolesAllowed: ["AGENCY", "OWNER"] }
 );

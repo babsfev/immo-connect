@@ -1,53 +1,90 @@
 "use client";
 
 import React from "react";
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell 
+} from "recharts";
 import { formatCurrency } from "@/lib/utils";
 
 interface ChartData {
   month: string;
-  in: number;  // Entrées
-  out: number; // Sorties
+  in: number;
+  out: number;
 }
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-900 text-white text-xs p-3 rounded-xl shadow-xl border border-slate-700">
+        <p className="font-bold mb-2 text-slate-300 uppercase tracking-wider">{label}</p>
+        <div className="space-y-1">
+            <p className="text-emerald-400 flex justify-between gap-4">
+                <span>Entrées :</span>
+                <span className="font-mono font-bold">+{formatCurrency(payload[0].value)}</span>
+            </p>
+            <p className="text-rose-400 flex justify-between gap-4">
+                <span>Sorties :</span>
+                <span className="font-mono font-bold">-{formatCurrency(payload[1].value)}</span>
+            </p>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export function PerformanceMetrics({ data }: { data: ChartData[] }) {
-  // Trouver le max pour l'échelle (minimum 100 000 pour éviter l'échelle plate si vide)
-  const maxVal = Math.max(...data.map(d => Math.max(d.in, d.out)), 100000);
+  // Si pas de données, on affiche un état vide élégant
+  if (!data || data.every(d => d.in === 0 && d.out === 0)) {
+      return (
+          <div className="h-full w-full flex flex-col items-center justify-center text-slate-400">
+              <div className="w-16 h-1 bg-slate-100 rounded-full mb-2"></div>
+              <div className="w-12 h-1 bg-slate-100 rounded-full mb-4"></div>
+              <p className="text-xs">Pas assez de données financières</p>
+          </div>
+      )
+  }
 
   return (
-    <div className="w-full h-full flex items-end justify-between gap-2 px-2 pb-2">
-       {data.map((item, i) => (
-          <div key={i} className="flex flex-col items-center gap-2 w-full group cursor-pointer h-full justify-end">
-             
-             {/* Zone Barres */}
-             <div className="w-full flex gap-1 items-end justify-center h-full relative">
-                
-                {/* Barre Entrées (Bleu) */}
-                <div 
-                   className="w-2 sm:w-5 bg-blue-600 rounded-t-sm transition-all duration-500 group-hover:opacity-80 relative" 
-                   style={{ height: `${(item.in / maxVal) * 100}%`, minHeight: '4px' }}
-                >
-                   {/* Tooltip au survol */}
-                   <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none">
-                      +{formatCurrency(item.in)}
-                   </div>
-                </div>
-
-                {/* Barre Sorties (Orange) */}
-                <div 
-                   className="w-2 sm:w-5 bg-orange-500 rounded-t-sm transition-all duration-500 group-hover:opacity-80 relative" 
-                   style={{ height: `${(item.out / maxVal) * 100}%`, minHeight: '4px' }}
-                >
-                   <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none">
-                      -{formatCurrency(item.out)}
-                   </div>
-                </div>
-
-             </div>
-             
-             {/* Mois */}
-             <span className="text-[10px] text-slate-400 font-medium uppercase">{item.month}</span>
-          </div>
-       ))}
+    <div className="w-full h-full" style={{ minHeight: "220px" }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          margin={{ top: 10, right: 0, left: -20, bottom: 0 }}
+          barGap={4}
+        >
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+          <XAxis 
+            dataKey="month" 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }} 
+            dy={10}
+          />
+          <YAxis 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fill: '#94a3b8', fontSize: 10 }}
+            tickFormatter={(value) => `${value / 1000}k`} // Format compact
+          />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
+          
+          <Bar 
+            dataKey="in" 
+            fill="#2563eb" 
+            radius={[4, 4, 0, 0]} 
+            maxBarSize={40}
+            animationDuration={1500}
+          />
+          <Bar 
+            dataKey="out" 
+            fill="#f97316" 
+            radius={[4, 4, 0, 0]} 
+            maxBarSize={40}
+            animationDuration={1500}
+          />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }

@@ -37,10 +37,12 @@ export async function generateReceiptPDF(payment: any): Promise<Buffer> {
 
     // HEADER
     doc.rect(0, 0, 595.28, 120).fill(agency.primaryColor || "#2563EB");
-    if (agency.logoUrl) {
-       const logo = await fetchImage(agency.logoUrl);
-       if (logo) try { doc.image(logo, 50, 30, { width: 60 }); } catch {}
-    }
+    if (agency?.logoUrl) {
+      // Attention: PDFKit a besoin d'un buffer ou path, pas d'une URL web directe souvent
+      // Il faut fetch l'image avant
+      const logoBuffer = await fetch(agency.logoUrl).then(res => res.arrayBuffer());
+      doc.image(logoBuffer, 50, 50, { width: 100 });
+  }
     doc.fillColor("white").fontSize(24).text(agency.companyName || "IMMO CONNECT", 50, 40);
     doc.fontSize(10).text(agency.address || "Adresse non renseignée", 50, 70);
     

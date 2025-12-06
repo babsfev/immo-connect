@@ -1,103 +1,99 @@
 "use client";
 
-import React, { useState } from "react";
-import { UploadCloud, X, Loader2, Image as ImageIcon } from "lucide-react";
-import { createClient } from "@/lib/supabase"; // Notre client navigateur
-import { toast } from "sonner";
-import Button from "../Button";
+import React, { useState, useRef } from "react";
+import { UploadCloud, X, Image as ImageIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import Button from "@/components/ui/Button";
 
 interface ImageUploadProps {
-  onUploadComplete: (url: string) => void;
-  currentImage?: string;
+  name: string;
+  label?: string;
+  defaultValue?: string | null;
+  error?: string;
+  onChange?: (file: File | null) => void;
 }
 
-export function ImageUpload({ onUploadComplete, currentImage }: ImageUploadProps) {
-  const [uploading, setUploading] = useState(false);
-  const [preview, setPreview] = useState<string | null>(currentImage || null);
+export function ImageUpload({ name, label, defaultValue, error, onChange }: ImageUploadProps) {
+  const [preview, setPreview] = useState<string | null>(defaultValue || null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      setUploading(true);
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      // 1. Création d'un nom unique (timestamp + nom nettoyé)
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      // 2. Upload vers Supabase Storage
-      const supabase = createClient();
-      const { error: uploadError } = await supabase.storage
-        .from('properties') // Le nom de votre bucket
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // 3. Récupération de l'URL publique
-      const { data } = supabase.storage
-        .from('properties')
-        .getPublicUrl(filePath);
-
-      // 4. Succès
-      setPreview(data.publicUrl);
-      onUploadComplete(data.publicUrl); // On remonte l'URL au formulaire parent
-      toast.success("Image téléchargée !");
-
-    } catch (error: any) {
-      toast.error("Erreur upload", { description: error.message });
-    } finally {
-      setUploading(false);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPreview(url);
+      onChange?.(file);
     }
   };
 
   const handleRemove = () => {
     setPreview(null);
-    onUploadComplete(""); // On vide l'URL
+    if (inputRef.current) inputRef.current.value = "";
+    onChange?.(null);
   };
 
   return (
-    <div className="space-y-4 w-full">
-      <label className="text-sm font-medium text-slate-700 block">Photo principale</label>
+    <div className="space-y-2">
+      {label && <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</span>}
       
-      {preview ? (
-        <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-slate-200 group">
-           <img src={preview} alt="Aperçu" className="w-full h-full object-cover" />
-           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+      {/* Input caché mais présent pour le formulaire HTML standard */}
+      <input
+        type="hidden"
+        name={name} // Astuce : on envoie l'URL existante si pas de nouveau fichier
+        value={preview || ""} 
+      />
+      
+      <div className={cn(
+        "relative border-2 border-dashed rounded-xl transition-all h-48 flex flex-col items-center justify-center overflow-hidden bg-slate-50 group",
+        error ? "border-red-300 bg-red-50/10" : "border-slate-300 hover:border-slate-400 hover:bg-slate-100"
+      )}>
+        
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          // Note: le 'name' ici n'est pas celui envoyé au serveur directement si on utilise un upload cloud séparé
+          // Mais pour un formulaire simple multipart, on peut le mettre
+          onChange={handleFileChange}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+        />
+
+        {preview ? (
+          <>
+            {/* Aperçu Image */}
+            <img src={preview} alt="Aperçu" className="w-full h-full object-cover" />
+            
+            {/* Bouton supprimer (z-20 pour être au dessus de l'input file) */}
+            <div className="absolute top-2 right-2 z-20">
               <Button 
-                type="button"
+                type="button" 
                 variant="danger" 
-                size="sm"
-                onClick={handleRemove}
-                className="bg-white text-red-600 hover:bg-red-50"
+                size="icon" 
+                className="h-8 w-8 rounded-full shadow-md"
+                onClick={(e) => {
+                  e.preventDefault(); // Empêche d'ouvrir le sélecteur de fichier
+                  handleRemove();
+                }}
               >
-                 <X size={16} className="mr-2"/> Supprimer la photo
+                <X size={14} />
               </Button>
-           </div>
-        </div>
-      ) : (
-        <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 flex flex-col items-center justify-center hover:bg-slate-50 transition-colors relative cursor-pointer">
-           <input 
-              type="file" 
-              accept="image/*" 
-              onChange={handleUpload} 
-              disabled={uploading}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-           />
-           
-           <div className="bg-blue-50 p-4 rounded-full mb-3 text-blue-600">
-              {uploading ? <Loader2 size={24} className="animate-spin"/> : <UploadCloud size={24}/>}
-           </div>
-           
-           <div className="text-center">
-              <p className="text-sm font-bold text-slate-700">
-                 {uploading ? "Téléchargement..." : "Cliquez pour ajouter une photo"}
-              </p>
-              <p className="text-xs text-slate-400 mt-1">JPG, PNG (Max 2Mo)</p>
-           </div>
-        </div>
+            </div>
+          </>
+        ) : (
+          <div className="text-center p-4">
+            <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-3 text-slate-400 group-hover:scale-110 transition-transform">
+              <UploadCloud size={24} />
+            </div>
+            <p className="text-sm font-medium text-slate-700">Cliquez pour ajouter une photo</p>
+            <p className="text-xs text-slate-400 mt-1">JPG, PNG (Max 5Mo)</p>
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <p className="text-[11px] font-medium text-red-600 flex items-center gap-1.5 animate-in slide-in-from-top-1">
+           {error}
+        </p>
       )}
     </div>
   );

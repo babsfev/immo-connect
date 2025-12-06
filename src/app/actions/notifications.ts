@@ -3,28 +3,57 @@
 import { db } from "@/lib/prisma";
 import { createSafeAction, actionResult } from "@/lib/safe-action";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
+// Schéma pour une seule notification
+const MarkSingleReadSchema = z.object({
+  notificationId: z.string(),
+});
+
+// --- ACTION 1 : Marquer UNE notification comme lue ---
+export const markAsRead = createSafeAction(
+  MarkSingleReadSchema,
+  async ({ userId }, { notificationId }) => {
+    
+    if (!userId) return actionResult.error("Non autorisé.");
+
+    try {
+      await db.notification.update({
+        where: { 
+          id: notificationId,
+          userId: userId // Sécurité : on vérifie que c'est bien sa notif
+        },
+        data: { read: true }
+      });
+
+      revalidatePath("/"); 
+      return actionResult.success("Notification lue.");
+    } catch (e) {
+      return actionResult.error("Erreur serveur.");
+    }
+  }
+);
+
+// --- ACTION 2 : Tout marquer comme lu ---
 export const markAllAsRead = createSafeAction(
-  null, // Pas de schéma d'entrée nécessaire
+  z.object({}), // On met un objet vide explicite pour satisfaire TypeScript
   async ({ userId }) => {
     
-    // CORRECTION : Vérification de sécurité pour TypeScript
     if (!userId) return actionResult.error("Non autorisé.");
 
     try {
       await db.notification.updateMany({
         where: { 
-          userId: userId, // Maintenant TypeScript sait que c'est un string
+          userId: userId, 
           read: false 
         },
         data: { read: true }
       });
 
-      revalidatePath("/"); // On rafraîchit tout (pour mettre à jour la cloche du header)
-      return actionResult.success("Notifications marquées comme lues.");
+      revalidatePath("/");
+      return actionResult.success("Tout est marqué comme lu.");
     } catch (e) {
       return actionResult.error("Erreur serveur.");
     }
-  },
-  // Pas de restriction de rôle stricte, tout utilisateur connecté peut lire ses notifs
+  }
 );

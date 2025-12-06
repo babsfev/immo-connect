@@ -1,7 +1,17 @@
-import { PrismaClient } from '@prisma/client';
+// src/lib/prisma.ts
+import { PrismaClient } from "@prisma/client";
+import { softDeleteExtension } from "./prisma-extension"; // <-- Import
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const prismaClientSingleton = () => {
+  const client = new PrismaClient();
+  // On applique l'extension ici
+  return softDeleteExtension(client);
+};
 
-export const db = globalForPrisma.prisma || new PrismaClient();
+declare global {
+  var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db;
+export const db = globalThis.prisma ?? prismaClientSingleton();
+
+if (process.env.NODE_ENV !== "production") globalThis.prisma = db;

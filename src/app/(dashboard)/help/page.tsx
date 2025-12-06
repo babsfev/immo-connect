@@ -8,7 +8,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
-import Input from "@/components/ui/form/Input";
+import {Input} from "@/components/ui/form/Input";
 import Button from "@/components/ui/Button";
 
 export default function HelpPage() {

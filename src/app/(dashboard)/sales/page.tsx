@@ -17,7 +17,7 @@ import {
 import Button from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import Input from "@/components/ui/form/Input";
+import {Input} from "@/components/ui/form/Input";
 import { formatCurrency } from "@/lib/utils";
 
 // Mock Data : Pipeline de Vente

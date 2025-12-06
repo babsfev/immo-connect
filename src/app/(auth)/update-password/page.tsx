@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/ui/Logo";
 import Button from "@/components/ui/Button";
-import Input from "@/components/ui/form/Input";
+import {Input} from "@/components/ui/form/Input";
 import { Lock, Eye, EyeOff, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useAction } from "@/hooks/use-action";

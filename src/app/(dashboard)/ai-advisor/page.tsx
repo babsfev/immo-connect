@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import Input from "@/components/ui/form/Input";
+import {Input} from "@/components/ui/form/Input";
 import { toast } from "sonner";
 
 // Types

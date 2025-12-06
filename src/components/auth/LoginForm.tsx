@@ -3,8 +3,9 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import Button from "@/components/ui/Button";
+import { Input } from "@/components/ui/form/Input"; // Nouvel Input
 import { toast } from "sonner";
 import { useAction } from "@/hooks/use-action";
 import { loginUser } from "@/app/actions/auth";
@@ -40,100 +41,83 @@ export function LoginForm() {
   return (
     <div className={`w-full ${shake ? "animate-[shake_0.4s]" : ""}`}>
       <form action={handleSubmit} className="space-y-5">
-        {/* Email */}
-        <div>
-          <label htmlFor="email" className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
-            Email professionnel
-          </label>
-          <div className="mt-2 relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-              <Mail size={16} />
-            </span>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              aria-label="Email"
-              placeholder="nom@entreprise.com"
-              required
-              autoComplete="email"
-              className="w-full pl-10 pr-3 h-12 border border-slate-200 rounded-lg bg-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-            />
-          </div>
-          {getFieldError("email") && <p className="text-xs text-red-600 mt-1">{getFieldError("email")}</p>}
-        </div>
+        
+        <Input 
+          label="Email professionnel"
+          name="email"
+          type="email"
+          placeholder="nom@entreprise.com"
+          icon={<Mail size={18} />}
+          required
+          autoComplete="email"
+          error={getFieldError("email")}
+        />
 
-        {/* Password */}
-        <div>
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label htmlFor="password" className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+            <label htmlFor="password" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Mot de passe
             </label>
             <Link href="/forgot-password" className="text-xs text-blue-600 hover:text-blue-700 font-semibold">
               Oublié ?
             </Link>
           </div>
-
-          <div className="mt-2 relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-              <Lock size={16} />
-            </span>
-            <input
-              id="password"
-              name="password"
-              type={showPass ? "text" : "password"}
-              aria-label="Mot de passe"
-              placeholder="••••••••"
-              required
-              autoComplete="current-password"
-              className="w-full pl-10 pr-12 h-12 border border-slate-200 rounded-lg bg-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPass(!showPass)}
-              aria-label={showPass ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
-            >
-              {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
+          <div className="relative">
+             <Input
+                id="password"
+                name="password"
+                type={showPass ? "text" : "password"}
+                placeholder="••••••••"
+                icon={<Lock size={18} />}
+                required
+                autoComplete="current-password"
+                error={getFieldError("password")}
+                // Bouton "Oeil" intégré manuellement ou via rightIcon si Input le supporte avec interactivité
+                className="pr-10" 
+             />
+             <button
+                type="button"
+                onClick={() => setShowPass(!showPass)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 z-10"
+             >
+                {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+             </button>
           </div>
-          {getFieldError("password") && <p className="text-xs text-red-600 mt-1">{getFieldError("password")}</p>}
         </div>
 
         {/* Global error */}
         {result && !result.ok && !result.details && (
-          <div className="bg-red-50 text-red-700 text-sm p-3 rounded-md border border-red-100">
+          <div className="bg-red-50 text-red-700 text-sm p-3 rounded-xl border border-red-100 flex items-center justify-center">
             {result.error}
           </div>
         )}
 
         {/* Submit */}
-        <div>
-          <Button
-            type="submit"
-            className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold flex items-center justify-center gap-2"
-            disabled={isPending}
-          >
-            {isPending ? <Loader2 className="animate-spin" /> : "Se connecter"}
-          </Button>
-        </div>
+        <Button
+          type="submit"
+          className="w-full bg-slate-900 hover:bg-slate-800 text-white shadow-lg"
+          size="lg"
+          isLoading={isPending}
+        >
+          Se connecter
+        </Button>
       </form>
 
       {/* Separator */}
-      <div className="my-6 relative">
+      <div className="my-8 relative">
         <div className="absolute inset-0 flex items-center" aria-hidden>
           <span className="w-full border-t border-slate-200"></span>
         </div>
-        <div className="relative flex justify-center text-xs font-bold text-slate-400 uppercase">
+        <div className="relative flex justify-center text-xs font-bold text-slate-400 uppercase tracking-wider">
           <span className="bg-white px-3">Ou continuer avec</span>
         </div>
       </div>
 
       <SocialButtons />
 
-      <p className="text-center text-sm text-slate-500 mt-6">
+      <p className="text-center text-sm text-slate-500 mt-8">
         Pas encore de compte ?{" "}
-        <Link href="/register" className="text-blue-600 font-semibold hover:text-blue-700">
+        <Link href="/register" className="text-blue-600 font-bold hover:text-blue-700 hover:underline">
           Créer un compte
         </Link>
       </p>

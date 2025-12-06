@@ -35,7 +35,6 @@ export function NewTenantForm({ properties }: { properties: Prop[] }) {
     },
   });
 
-  // CORRECTION DU TYPE : On renvoie undefined au lieu de null
   const getError = (field: string): string | undefined => {
     if (isActionError(result) && result.details?.[field]) {
       return result.details[field][0];
@@ -96,10 +95,11 @@ export function NewTenantForm({ properties }: { properties: Prop[] }) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label required>Prénom</Label>
+            {/* 👇 CORRECTION : error au lieu de errorMessage */}
             <Input
               name="firstName"
               placeholder="Moussa"
-              errorMessage={getError("firstName")}
+              error={getError("firstName")}
             />
           </div>
           <div>
@@ -107,7 +107,7 @@ export function NewTenantForm({ properties }: { properties: Prop[] }) {
             <Input
               name="lastName"
               placeholder="Diop"
-              errorMessage={getError("lastName")}
+              error={getError("lastName")}
             />
           </div>
         </div>
@@ -119,7 +119,7 @@ export function NewTenantForm({ properties }: { properties: Prop[] }) {
               name="email"
               type="email"
               placeholder="client@gmail.com"
-              errorMessage={getError("email")}
+              error={getError("email")}
             />
           </div>
           <div>
@@ -130,7 +130,7 @@ export function NewTenantForm({ properties }: { properties: Prop[] }) {
               onChange={(e) =>
                 (e.target.value = formatSenegalPhone(e.target.value))
               }
-              errorMessage={getError("phone")}
+              error={getError("phone")}
             />
           </div>
         </div>
@@ -148,7 +148,7 @@ export function NewTenantForm({ properties }: { properties: Prop[] }) {
             <Input
               name="startDate"
               type="date"
-              errorMessage={getError("startDate")}
+              error={getError("startDate")}
             />
           </div>
           <div>
@@ -168,7 +168,7 @@ export function NewTenantForm({ properties }: { properties: Prop[] }) {
             Le premier paiement sera généré automatiquement avec ce montant.
           </p>
           {getError("rentAmount") && (
-            <ErrorMessage message={getError("rentAmount")} />
+            <ErrorMessage error={getError("rentAmount")} />
           )}
         </div>
       </div>

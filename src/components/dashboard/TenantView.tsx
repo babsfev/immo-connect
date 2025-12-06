@@ -1,93 +1,67 @@
 "use client";
+
 import React from "react";
-import { Home, CreditCard, Wrench, FileText, Bell, ChevronRight } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { formatCurrency } from "@/lib/utils";
+import Link from "next/link";
+import { User, UserPlus } from "lucide-react";
+import Button from "@/components/ui/Button";
 
-export function TenantView() {
-  // Données simulées du locataire connecté
-  const rentStatus = "À jour"; // ou "Retard"
-  const rentAmount = 450000;
+// Définition du type de donnée attendue
+type TenantItem = {
+  id: string;
+  name: string;
+  property: string;
+  status: string;
+};
 
+export function TenantView({ tenants }: { tenants: TenantItem[] }) {
   return (
-    <div className="pb-24 space-y-6">
+    <Card className="h-full border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+      <CardHeader className="pb-3 border-b border-slate-50">
+        <CardTitle className="text-base flex justify-between items-center">
+            <span className="font-bold text-slate-800 flex items-center gap-2">
+                <User size={18} className="text-blue-500"/> Derniers Locataires
+            </span>
+            <Link href="/tenants" className="text-xs font-medium text-blue-600 hover:underline">Voir tout</Link>
+        </CardTitle>
+      </CardHeader>
       
-      {/* 1. HEADER MOBILE */}
-      <div className="flex justify-between items-center">
-         <div>
-            <h1 className="text-2xl font-bold text-slate-900">Mon Logement</h1>
-            <p className="text-slate-500 text-sm">Apt T3 - Centre Ville</p>
-         </div>
-         <div className="relative">
-            <Bell className="text-slate-600" />
-            <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-         </div>
-      </div>
-
-      {/* 2. STATUS LOYER (Card Principale) */}
-      <Card className={`border-none text-white shadow-xl ${rentStatus === "À jour" ? "bg-linear-to-br from-blue-600 to-blue-800" : "bg-red-600"}`}>
-         <CardContent className="p-6">
-            <p className="text-blue-100 text-xs font-bold uppercase tracking-wider mb-1">Situation Loyer</p>
-            <div className="flex justify-between items-end mb-4">
-               <h2 className="text-3xl font-bold">{rentStatus === "À jour" ? "Tout est bon ! 🎉" : "Retard ⚠️"}</h2>
+      <CardContent className="pt-0 flex-1 overflow-y-auto">
+        {tenants && tenants.length > 0 ? (
+            <div className="divide-y divide-slate-50">
+                {tenants.map((tenant) => (
+                    <div key={tenant.id} className="flex items-center justify-between group py-3 hover:bg-slate-50 transition-colors px-1 -mx-1 rounded-lg">
+                        <div className="flex items-center gap-3">
+                            {/* Avatar (Initiales) */}
+                            <div className="h-9 w-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold text-xs group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+                                {tenant.name.charAt(0)}
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-slate-900 leading-none group-hover:text-blue-700 transition-colors">{tenant.name}</p>
+                                <p className="text-xs text-slate-500 mt-1 truncate max-w-[120px]">{tenant.property}</p>
+                            </div>
+                        </div>
+                        <Badge variant={tenant.status === "À jour" ? "success" : "secondary"} size="sm" dot>
+                            {tenant.status}
+                        </Badge>
+                    </div>
+                ))}
             </div>
-            <div className="bg-white/10 rounded-xl p-3 flex justify-between items-center backdrop-blur-sm">
-               <span className="text-sm">Prochain prélèvement</span>
-               <span className="font-bold text-lg">{formatCurrency(rentAmount)}</span>
+        ) : (
+            // État Vide (Empty State) si aucun locataire
+            <div className="h-full flex flex-col items-center justify-center text-center py-8 text-slate-400">
+                <div className="bg-slate-50 p-3 rounded-full mb-2">
+                    <UserPlus size={24} className="opacity-50"/>
+                </div>
+                <p className="text-sm font-medium text-slate-600">Aucun locataire</p>
+                <p className="text-xs mb-4">Commencez par ajouter un dossier.</p>
+                <Link href="/tenants">
+                    <Button size="sm" variant="outline">Ajouter</Button>
+                </Link>
             </div>
-            <Button className="w-full mt-4 bg-white text-blue-700 hover:bg-blue-50 border-none">
-               <CreditCard size={16} className="mr-2"/> Payer maintenant
-            </Button>
-         </CardContent>
-      </Card>
-
-      {/* 3. ACTIONS RAPIDES (Grid) */}
-      <div className="grid grid-cols-2 gap-4">
-         <Card className="active:scale-95 transition-transform cursor-pointer">
-            <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-               <div className="p-3 bg-orange-50 text-orange-600 rounded-full"><Wrench size={24}/></div>
-               <span className="font-bold text-slate-700">Signaler incident</span>
-            </CardContent>
-         </Card>
-         <Card className="active:scale-95 transition-transform cursor-pointer">
-            <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-               <div className="p-3 bg-blue-50 text-blue-600 rounded-full"><FileText size={24}/></div>
-               <span className="font-bold text-slate-700">Mes Documents</span>
-            </CardContent>
-         </Card>
-      </div>
-
-      {/* 4. DERNIÈRES ACTIVITÉS */}
-      <div>
-         <h3 className="font-bold text-slate-900 mb-3">Activités récentes</h3>
-         <div className="space-y-3">
-            <div className="bg-white p-3 rounded-xl border border-slate-100 flex items-center justify-between shadow-sm">
-               <div className="flex items-center gap-3">
-                  <div className="bg-green-100 text-green-600 p-2 rounded-lg"><Check size={16}/></div>
-                  <div>
-                     <p className="text-sm font-bold text-slate-900">Quittance Nov. générée</p>
-                     <p className="text-xs text-slate-500">Hier</p>
-                  </div>
-               </div>
-               <ChevronRight size={16} className="text-slate-300"/>
-            </div>
-            <div className="bg-white p-3 rounded-xl border border-slate-100 flex items-center justify-between shadow-sm">
-               <div className="flex items-center gap-3">
-                  <div className="bg-blue-100 text-blue-600 p-2 rounded-lg"><Wrench size={16}/></div>
-                  <div>
-                     <p className="text-sm font-bold text-slate-900">Plombier programmé</p>
-                     <p className="text-xs text-slate-500">25 Nov à 14h</p>
-                  </div>
-               </div>
-               <ChevronRight size={16} className="text-slate-300"/>
-            </div>
-         </div>
-      </div>
-
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
-
-import { Check } from "lucide-react"; // Import manquant

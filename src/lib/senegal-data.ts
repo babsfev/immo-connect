@@ -1,31 +1,26 @@
-// Données de référence pour le Sénégal
-export const SENEGAL_REGIONS = [
-  "Dakar", "Thiès", "Saint-Louis", "Diourbel", "Ziguinchor", 
-  "Kaolack", "Tambacounda", "Louga", "Fatick", "Kolda", 
-  "Matam", "Kaffrine", "Kédougou", "Sédhiou"
+export const REGIONS = [
+  "Dakar", "Thiès", "Saint-Louis", "Diourbel", "Louga", "Fatick", 
+  "Kaolack", "Kaffrine", "Kolda", "Ziguinchor", "Sédhiou", "Tambacounda", "Kédougou", "Matam"
 ];
 
-// Quartiers de Dakar (Pour l'autocomplétion)
-export const DAKAR_QUARTIERS = [
-  "Almadies", "Plateau", "Point E", "Fann Résidence", "Mermoz", 
-  "Sacré-Cœur", "Yoff", "Ouakam", "Ngor", "Virage",
-  "Parcelles Assainies", "Grand Dakar", "Hann Maristes", 
-  "Corniche Ouest", "Mamelles", "Sicap Liberté"
+// Focus sur Dakar pour le MVP (Zone la plus active)
+export const DAKAR_ZONES = [
+  { label: "Plateau & Corniche", value: "plateau" },
+  { label: "Almadies & Ngor", value: "almadies" },
+  { label: "Mermoz & Sacré-Cœur", value: "mermoz" },
+  { label: "Point E & Fann", value: "point_e" },
+  { label: "Yoff & Virage", value: "yoff" },
+  { label: "Parcelles Assainies", value: "parcelles" },
+  { label: "Guédiawaye & Banlieue", value: "banlieue" },
+  { label: "Diamniadio & Rufisque", value: "diamniadio" },
 ];
 
-export const CURRENCY = {
-  code: "XOF",
-  symbol: "FCFA",
-  locale: "fr-SN"
-};
+export const BANKS_SN = [
+  "CBAO", "SGBS", "BICIS", "Ecobank", "Orabank", "BOA", "UBA", "Coris Bank", "Banque Islamique"
+];
 
-// Helper pour formater un numéro de téléphone au format local (+221)
-export function formatPhoneNumber(phone: string) {
-  // Nettoie tout ce qui n'est pas chiffre
-  const cleaned = phone.replace(/\D/g, '');
-  // Si ça commence par 77, 76, 75, 70, 78... on ajoute +221
-  if (cleaned.length === 9 && (cleaned.startsWith('7'))) {
-    return `+221 ${cleaned.substring(0, 2)} ${cleaned.substring(2, 5)} ${cleaned.substring(5, 7)} ${cleaned.substring(7)}`;
-  }
-  return phone;
-}
+export const MOBILE_MONEY = [
+  { id: "WAVE", label: "Wave", color: "#1dc4ff" },
+  { id: "OM", label: "Orange Money", color: "#ff7900" },
+  { id: "FREE", label: "Free Money", color: "#d92631" },
+];

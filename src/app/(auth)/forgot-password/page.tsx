@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/ui/Logo";
 import Button from "@/components/ui/Button";
-import Input from "@/components/ui/form/Input";
+import {Input} from "@/components/ui/form/Input";
 import { ArrowLeft, Loader2, CheckCircle2, Lock } from "lucide-react";
 import { resetPassword } from "@/app/actions/auth";
 import { toast } from "sonner";

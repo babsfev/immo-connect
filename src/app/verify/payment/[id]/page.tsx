@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Logo } from "@/components/ui/Logo";
 import { formatCurrency } from "@/lib/utils";
-import { getPublicPaymentDetails } from "@/app/data/public-verification";
+// 👇 CORRECTION ICI (changement du nom de la fonction importée)
+import { getPublicPaymentVerification } from "@/app/data/public-verification";
 import Button from "@/components/ui/Button";
 
 // OPTIMISATION : Cache la page pendant 60 secondes
@@ -12,7 +13,9 @@ export const revalidate = 60;
 
 export default async function VerifyPaymentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const payment = await getPublicPaymentDetails(id);
+  
+  // 👇 CORRECTION ICI AUSSI
+  const payment = await getPublicPaymentVerification(id);
 
   // Cas 1 : Faux document ou ID invalide
   if (!payment) {
@@ -30,6 +33,7 @@ export default async function VerifyPaymentPage({ params }: { params: Promise<{ 
   }
 
   const isPaid = payment.status === "PAID";
+  // On accède à agencySettings via le manager
   const agency = payment.lease.property.manager.agencySettings;
   const agencyName = agency?.companyName || "Agence Partenaire";
 
@@ -75,7 +79,7 @@ export default async function VerifyPaymentPage({ params }: { params: Promise<{ 
                   <div className="p-2 bg-white rounded-lg text-slate-400 border border-slate-100 shadow-sm"><User size={18}/></div>
                   <div>
                      <p className="text-xs font-bold text-slate-400 uppercase">Locataire</p>
-                     <p className="font-bold text-slate-800 text-sm">{payment.tenant.firstName} {payment.tenant.lastName}</p>
+                     <p className="font-bold text-slate-800 text-sm">{payment.tenantName}</p>
                   </div>
                </div>
                
@@ -85,8 +89,7 @@ export default async function VerifyPaymentPage({ params }: { params: Promise<{ 
                   <div className="p-2 bg-white rounded-lg text-slate-400 border border-slate-100 shadow-sm"><Building2 size={18}/></div>
                   <div>
                      <p className="text-xs font-bold text-slate-400 uppercase">Bien Loué</p>
-                     <p className="font-medium text-slate-700 text-sm leading-tight">{payment.lease.property.title}</p>
-                     <p className="text-xs text-slate-500 mt-0.5">{payment.lease.property.city}</p>
+                     <p className="font-medium text-slate-700 text-sm leading-tight">{payment.propertyTitle}</p>
                   </div>
                </div>
 
@@ -97,6 +100,7 @@ export default async function VerifyPaymentPage({ params }: { params: Promise<{ 
                   <div>
                      <p className="text-xs font-bold text-slate-400 uppercase">Date de valeur</p>
                      <p className="font-medium text-slate-700 text-sm">
+                        {/* On utilise payment.date qui est déjà une string formatée ISO venant de getPublicPaymentVerification */}
                         {new Date(payment.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                      </p>
                   </div>

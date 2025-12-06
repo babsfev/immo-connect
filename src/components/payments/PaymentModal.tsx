@@ -24,20 +24,25 @@ interface PaymentModalProps {
 
 export function PaymentModal({ isOpen, onClose, payment }: PaymentModalProps) {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [proofUrl, setProofUrl] = useState<string | null>(null);
+  const [proofFile, setProofFile] = useState<File | null>(null);
   
   const { execute, isPending } = useAction(capturePayment, {
     onSuccess: () => {
       toast.success("Encaissement validé !");
       onClose();
-      setProofUrl(null);
+      setProofFile(null);
     }
   });
 
   const handleSubmit = (formData: FormData) => {
     if (!payment) return;
     formData.append("paymentId", payment.id);
-    if (proofUrl) formData.append("proofUrl", proofUrl);
+    
+    // Simulation upload (cf explication précédente)
+    if (proofFile) {
+        // formData.append("proofUrl", "url_simulée");
+    }
+    
     execute(formData);
   };
 
@@ -89,10 +94,12 @@ export function PaymentModal({ isOpen, onClose, payment }: PaymentModalProps) {
 
              <div>
                 <Label>Preuve (Reçu / Chèque)</Label>
+                {/* 👇 CORRECTION ICI */}
                 <div className="mt-2">
                    <ImageUpload 
-                      currentImage={proofUrl || undefined} 
-                      onUploadComplete={setProofUrl} 
+                      name="proofUrl"
+                      onChange={setProofFile}
+                      label="Ajouter une preuve" 
                    />
                 </div>
              </div>

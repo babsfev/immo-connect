@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { cn } from "@/lib/utils";
 
@@ -7,8 +9,11 @@ interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
 
 export function Label({ className, children, required, ...props }: LabelProps) {
   return (
-    <label 
-      className={cn("block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5", className)} 
+    <label
+      className={cn(
+        "text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 block",
+        className
+      )}
       {...props}
     >
       {children}

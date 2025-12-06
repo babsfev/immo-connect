@@ -1,7 +1,7 @@
 import { db } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/authz";
-// ❗ PAS DE cache() ici pour éviter toute fuite de données entre utilisateurs
 
+// ❗ PAS DE cache() ici pour éviter toute fuite de données entre utilisateurs
 export async function getPaymentsData() {
   const user = await getCurrentUser();
   if (!user) return null;
@@ -9,7 +9,9 @@ export async function getPaymentsData() {
   try {
     const payments = await db.payment.findMany({
       where: {
-        lease: { property: { managerId: user.userId } }
+        lease: { property: { managerId: user.userId } },
+        // IMPORTANT : On exclut les paiements supprimés (Soft Delete)
+        deletedAt: null 
       },
       orderBy: { dueDate: 'desc' },
       include: {
@@ -20,7 +22,7 @@ export async function getPaymentsData() {
       }
     });
 
-    // SÉRIALISATION DES DATES (Crucial pour éviter les erreurs React)
+    // SÉRIALISATION DES DATES
     const safePayments = payments.map(p => {
       const received = p.receivedAmount || 0;
       const remaining = p.amount - received;
@@ -28,16 +30,21 @@ export async function getPaymentsData() {
       // Calcul du statut retard intelligent
       let displayStatus = p.status;
       if (displayStatus === "PENDING" && new Date(p.dueDate) < new Date()) {
-          displayStatus = "LATE";
+          displayStatus = "LATE" as any; // Cast pour satisfaire TS
       }
+
+      // Détermination de la date principale à afficher
+      // Si payé (ou partiel), on montre quand ça a été payé. Sinon, quand ça doit l'être.
+      const displayDate = p.lastPaymentDate || p.dueDate;
 
       return {
         ...p,
-        date: p.date.toISOString(),
+        // 👇 CORRECTION ICI : On n'appelle plus p.date qui n'existe pas
+        date: displayDate.toISOString(), 
         dueDate: p.dueDate.toISOString(),
         createdAt: p.createdAt.toISOString(),
         updatedAt: p.updatedAt.toISOString(),
-        // Champs calculés pour le front
+        // Champs calculés
         receivedAmount: received,
         remainingAmount: remaining > 0 ? remaining : 0,
         displayStatus: displayStatus

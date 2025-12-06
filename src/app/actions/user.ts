@@ -1,63 +1,45 @@
 "use server";
 
 import { db } from "@/lib/prisma";
-import { cache } from "react";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createSafeAction, actionResult } from "@/lib/safe-action"; // Ensure this import is correct
-import { headers } from "next/headers";
+import { createSafeAction, actionResult } from "@/lib/safe-action";
 
 // --- CONFIGURATION ---
-
 const PHONE_REGEX = /^(?:221|\+221)?(?:70|71|75|76|77|78)\d{7}$/;
 
 const PhoneSchema = z.object({
   phone: z.string().regex(PHONE_REGEX, "Numéro invalide. Opérateurs autorisés : 70, 71, 75, 76, 77, 78."),
 });
 
-// --- ACTIONS ---
+// --- ACTIONS DE MODIFICATION ---
 
-/**
- * Récupération User (Direct read, cached)
- * This is the function causing the error - ensure it is exported!
- */
-export const getUserMe = cache(async () => {
-  const headerList = await headers();
-  const userId = headerList.get("x-user-id");
-  
-  if (!userId) return null;
-
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      roles: true,
-      phone: true,
-      isVerified: true,
-    },
-  });
-
-  return user;
-});
-
-/**
- * Mise à jour téléphone
- */
 export const updateUserPhone = createSafeAction(
   PhoneSchema,
-  async ({ userId }, input) => {
+  async ({ userId }, input) => { 
     
-    await db.user.update({
-      where: { id: userId },
-      data: { phone: input.phone },
-    });
+    // CORRECTION ICI : On s'assure que userId n'est pas null/undefined
+    if (!userId) {
+        return actionResult.error("Utilisateur non identifié.");
+    }
+    
+    // Maintenant TypeScript sait que userId est un string
+    const user = await db.user.findUnique({ where: { id: userId } });
+    if (!user) return actionResult.error("Utilisateur introuvable.");
 
-    revalidatePath("/dashboard");
-    
-    return actionResult.success("Profil mis à jour.", { phone: input.phone });
+    try {
+        await db.user.update({
+          where: { id: userId }, // Ici aussi, userId est sûr
+          data: { phone: input.phone },
+        });
+
+        revalidatePath("/dashboard");
+        revalidatePath("/settings");
+        
+        return actionResult.success("Profil mis à jour.", { phone: input.phone });
+    } catch (e) {
+        return actionResult.error("Erreur lors de la mise à jour.");
+    }
   },
-  { rolesAllowed: ["AGENCY", "OWNER"] } // Optional RBAC
+  { rolesAllowed: ["AGENCY", "OWNER", "TENANT"] }
 );

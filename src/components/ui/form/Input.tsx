@@ -1,62 +1,87 @@
 "use client";
 
-import React, { InputHTMLAttributes, useId } from "react"; // 1. Import useId
+import React from "react";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type InputProps = InputHTMLAttributes<HTMLInputElement> & {
-  leftIcon?: React.ComponentType<{ size?: number }>;
-  errorMessage?: string | undefined;
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  wrapperClassName?: string;
-};
+  error?: string | string[]; // Accepte string ou tableau d'erreurs
+  icon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+}
 
-export default function Input({
-  leftIcon: LeftIcon,
-  errorMessage,
-  label,
-  wrapperClassName,
-  className,
-  id,
-  ...props
-}: InputProps) {
-  // 2. Utilisation de useId() pour un ID stable
-  const generatedId = useId();
-  const inputId = id || generatedId;
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, label, error, icon, rightIcon, ...props }, ref) => {
+    
+    // On extrait le premier message d'erreur si c'est un tableau
+    const errorMessage = Array.isArray(error) ? error[0] : error;
+    const hasError = !!errorMessage;
 
-  return (
-    <div className={cn("w-full", wrapperClassName)}>
-      {label && (
-        <label htmlFor={inputId} className="text-xs font-semibold text-slate-700 uppercase tracking-wide ml-1">
-          {label}
-        </label>
-      )}
-
-      <div className="relative mt-2">
-        {LeftIcon && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-            <LeftIcon size={16} />
-          </span>
+    return (
+      <div className="space-y-1.5 w-full">
+        {label && (
+          <label 
+            htmlFor={props.id || props.name}
+            className={cn(
+              "text-xs font-bold uppercase tracking-wider transition-colors",
+              hasError ? "text-red-600" : "text-slate-500"
+            )}
+          >
+            {label}
+          </label>
         )}
 
-        <input
-          id={inputId}
-          {...props}
-          className={cn(
-            "w-full h-12 rounded-lg px-3 text-sm placeholder:text-slate-400 focus:outline-none",
-            LeftIcon ? "pl-10" : "pl-3",
-            errorMessage ? "border border-red-100 bg-red-50" : "border border-slate-200 bg-white",
-            className
+        <div className="relative group">
+          {/* Icône Gauche */}
+          {icon && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-500 pointer-events-none">
+              {icon}
+            </div>
           )}
-          aria-invalid={!!errorMessage}
-          aria-describedby={errorMessage ? `${inputId}-error` : undefined}
-        />
-      </div>
 
-      {errorMessage && (
-        <p id={`${inputId}-error`} role="alert" className="text-xs text-red-600 mt-1">
-          {errorMessage}
-        </p>
-      )}
-    </div>
-  );
-}
+          <input
+            type={type}
+            className={cn(
+              "flex h-11 w-full rounded-xl border bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200",
+              icon && "pl-10",
+              rightIcon || hasError ? "pr-10" : "",
+              hasError 
+                ? "border-red-300 focus-visible:ring-red-500/20 focus-visible:border-red-500 text-red-900 placeholder:text-red-300" 
+                : "border-slate-200 focus-visible:border-blue-500 focus-visible:ring-blue-500/20 hover:border-slate-300",
+              className
+            )}
+            ref={ref}
+            {...props}
+          />
+
+          {/* Icône Droite (Action ou Erreur) */}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            {hasError ? (
+              <AlertCircle className="h-5 w-5 text-red-500 animate-in zoom-in spin-in-90 duration-300" />
+            ) : rightIcon ? (
+              <div className="text-slate-400">{rightIcon}</div>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Message d'erreur animé */}
+        <div className={cn(
+            "grid transition-all duration-300 ease-out",
+            hasError ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        )}>
+            <div className="overflow-hidden">
+                <p className="text-[11px] font-medium text-red-600 flex items-center gap-1.5 pt-1">
+                   <span className="w-1 h-1 rounded-full bg-red-500 inline-block" /> 
+                   {errorMessage}
+                </p>
+            </div>
+        </div>
+      </div>
+    );
+  }
+);
+Input.displayName = "Input";
+
+export { Input };

@@ -1,75 +1,74 @@
 import { db } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/authz";
 
-interface CRGFilter {
-  month: number; // 0-11
-  year: number;
-  ownerId?: string; // Optionnel pour l'instant (si on gère ses propres biens)
-}
-
-export async function getCRGData({ month, year }: CRGFilter) {
+// On change la signature pour accepter des dates précises
+export async function getCRGData(startDate: Date, endDate: Date) {
   const user = await getCurrentUser();
   if (!user) return null;
 
-  // Dates de début et fin du mois
-  const startDate = new Date(year, month, 1);
-  const endDate = new Date(year, month + 1, 0, 23, 59, 59);
-
-  // 1. Récupérer les ENTRÉES (Loyer encaissés ce mois-ci)
-  // On regarde la date d'encaissement réelle (p.date), pas l'échéance (p.dueDate)
-  const incomes = await db.payment.findMany({
+  // 1. Récupération des encaissements
+  const payments = await db.payment.findMany({
     where: {
       lease: { property: { managerId: user.userId } },
-      status: "PAID", // Seul l'argent réellement touché compte
-      date: {
+      // On filtre sur la date réelle d'encaissement
+      lastPaymentDate: {
         gte: startDate,
         lte: endDate
-      }
+      },
+      status: { in: ['PAID', 'PARTIAL'] },
+      deletedAt: null // Soft delete
     },
     include: {
       lease: { include: { property: true } },
       tenant: true
-    }
+    },
+    orderBy: { lastPaymentDate: 'asc' }
   });
 
-  // 2. Récupérer les SORTIES (Dépenses payées ce mois-ci)
+  // 2. Récupération des dépenses
   const expenses = await db.expense.findMany({
     where: {
       property: { managerId: user.userId },
       date: {
         gte: startDate,
         lte: endDate
-      }
+      },
+      deletedAt: null
     },
     include: {
       property: true
-    }
+    },
+    orderBy: { date: 'asc' }
   });
 
-  // 3. CALCULS
-  const totalIncome = incomes.reduce((sum, item) => sum + (item.receivedAmount || item.amount), 0);
-  const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
+  // 3. Calculs
+  const totalIncome = payments.reduce((acc, p) => acc + (p.receivedAmount || 0), 0);
+  const totalExpense = expenses.reduce((acc, e) => acc + e.amount, 0);
   
-  // Commission Agence (Ex: 10% par défaut, à configurer plus tard dans AgencySettings)
-  const agencyRate = 0.10; 
-  const agencyFees = totalIncome * agencyRate;
+  // Commission (10%)
+  const agencyFees = totalIncome * 0.10;
+  const netIncome = totalIncome - totalExpense - agencyFees;
 
-  // Net à reverser au propriétaire
-  const netBalance = totalIncome - totalExpense - agencyFees;
+  // 4. Formatage
+  const reportData = payments.map(p => ({
+    type: 'INCOME',
+    date: p.lastPaymentDate!,
+    description: `Loyer - ${p.tenant.lastName}`,
+    property: p.lease.property.title,
+    amount: p.receivedAmount || 0
+  }));
+
+  const expenseData = expenses.map(e => ({
+    type: 'EXPENSE',
+    date: e.date,
+    description: e.title,
+    property: e.property.title,
+    amount: e.amount
+  }));
 
   return {
-    period: { month, year },
-    incomes: incomes.map(i => ({
-       date: i.date,
-       label: `Loyer - ${i.lease.property.title} (${i.tenant.lastName})`,
-       amount: i.receivedAmount || i.amount
-    })),
-    expenses: expenses.map(e => ({
-       date: e.date,
-       label: `Frais - ${e.title} (${e.property.title})`,
-       amount: e.amount
-    })),
-    fees: { label: "Honoraires de Gestion (10%)", amount: agencyFees },
-    totals: { totalIncome, totalExpense, netBalance }
+    period: { start: startDate, end: endDate },
+    stats: { totalIncome, totalExpense, agencyFees, netIncome },
+    transactions: [...reportData, ...expenseData].sort((a, b) => a.date.getTime() - b.date.getTime())
   };
 }

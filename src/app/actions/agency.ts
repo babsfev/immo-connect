@@ -7,19 +7,29 @@ import { db } from "@/lib/prisma";
 const SettingsSchema = z.object({
   companyName: z.string().optional(),
   ninea: z.string().optional(),
-  // ... autres champs textuels
-  logoUrl: z.string().optional().nullable(),      // <-- URL String
-  signatureUrl: z.string().optional().nullable(), // <-- URL String
+  logoUrl: z.string().optional().nullable(),
+  signatureUrl: z.string().optional().nullable(),
 });
 
 export const updateAgencySettings = createSafeAction(
   SettingsSchema,
   async ({ userId }, data) => {
+    
+    // 👇 CORRECTION ICI : On vérifie (et on type) userId
+    if (!userId) {
+      return actionResult.error("Utilisateur non identifié.");
+    }
+
+    // Maintenant TypeScript sait que userId est un string !
     await db.agencySettings.upsert({
-      where: { userId },
+      where: { userId }, 
       update: { ...data },
-      create: { userId, ...data },
+      create: { 
+        userId, // Ici aussi c'est safe maintenant
+        ...data 
+      },
     });
+    
     return actionResult.success("Paramètres mis à jour !");
   },
   { rolesAllowed: ["AGENCY", "OWNER"] }
