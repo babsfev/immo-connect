@@ -9,23 +9,27 @@ const SettingsSchema = z.object({
   ninea: z.string().optional(),
   logoUrl: z.string().optional().nullable(),
   signatureUrl: z.string().optional().nullable(),
+  address: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().optional(),
+  website: z.string().optional(),
 });
 
 export const updateAgencySettings = createSafeAction(
   SettingsSchema,
   async ({ userId }, data) => {
     
-    // 👇 CORRECTION ICI : On vérifie (et on type) userId
+    // 👇 LA CORRECTION EST ICI : On vérifie que userId existe
     if (!userId) {
       return actionResult.error("Utilisateur non identifié.");
     }
 
-    // Maintenant TypeScript sait que userId est un string !
+    // Maintenant TypeScript sait que userId est une string
     await db.agencySettings.upsert({
-      where: { userId }, 
+      where: { userId },
       update: { ...data },
       create: { 
-        userId, // Ici aussi c'est safe maintenant
+        userId, // Ici aussi c'est safe
         ...data 
       },
     });
