@@ -19,17 +19,17 @@ export const updateAgencySettings = createSafeAction(
   SettingsSchema,
   async ({ userId }, data) => {
     
-    // 👇 LA CORRECTION EST ICI : On vérifie que userId existe
+    // 👇 CORRECTION CRITIQUE : Cette vérification est obligatoire pour TypeScript
     if (!userId) {
       return actionResult.error("Utilisateur non identifié.");
     }
 
-    // Maintenant TypeScript sait que userId est une string
+    // Maintenant TypeScript sait que 'userId' est une string valide
     await db.agencySettings.upsert({
       where: { userId },
       update: { ...data },
       create: { 
-        userId, // Ici aussi c'est safe
+        userId, 
         ...data 
       },
     });
