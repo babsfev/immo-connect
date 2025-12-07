@@ -12,8 +12,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
-import Input from "@/components/ui/form/Input";
-import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/form";import { Card } from "@/components/ui/Card";
 import { Logo } from "@/components/ui/Logo";
 
 export default function NotFound() {

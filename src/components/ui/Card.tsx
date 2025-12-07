@@ -1,53 +1,47 @@
+"use client";
+
 import React from "react";
 import { cn } from "@/lib/utils";
 
-const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
+// L'interface doit inclure hoverEffect et glass
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  hoverEffect?: boolean; 
+  glass?: boolean;       
+}
+
+export function Card({ className, hoverEffect = false, glass = false, children, ...props }: CardProps) {
+  return (
     <div
-      ref={ref}
       className={cn(
-        // Base
-        "relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white",
-        // Ombre douce et colorée
-        "shadow-sm shadow-slate-200/50",
-        // Interaction : Lève légèrement + Ombre bleue très subtile
-        "transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/5 hover:border-blue-200",
+        "rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-sm overflow-hidden",
+        // La classe magique qui manquait :
+        hoverEffect && "transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-slate-300",
+        glass && "bg-white/80 backdrop-blur-md border-white/20 shadow-xl",
         className
       )}
       {...props}
     >
-      {/* Petit éclat lumineux en haut à droite (Esthétique) */}
-      <div className="absolute top-0 right-0 -mt-4 -mr-4 h-16 w-16 rounded-full bg-linear-to-br from-blue-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl pointer-events-none" />
-      {props.children}
+      {children}
     </div>
-  )
-);
-Card.displayName = "Card";
+  );
+}
 
-// ... (Garde CardHeader, CardTitle, etc. comme avant, ils sont très bien)
-const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("flex flex-col space-y-1.5 p-6", className)} {...props} />
-));
-CardHeader.displayName = "CardHeader";
+export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("flex flex-col space-y-1.5 p-6 pb-2", className)} {...props} />;
+}
 
-const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(({ className, ...props }, ref) => (
-  <h3 ref={ref} className={cn("text-lg font-bold leading-none tracking-tight text-slate-900", className)} {...props} />
-));
-CardTitle.displayName = "CardTitle";
+export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
+  return <h3 className={cn("font-bold leading-none tracking-tight text-lg", className)} {...props} />;
+}
 
-const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
-));
-CardContent.displayName = "CardContent";
+export function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
+  return <p className={cn("text-sm text-slate-500", className)} {...props} />;
+}
 
-const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("flex items-center p-6 pt-0", className)} {...props} />
-));
-CardFooter.displayName = "CardFooter";
+export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("p-6 pt-0", className)} {...props} />;
+}
 
-const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(({ className, ...props }, ref) => (
-  <p ref={ref} className={cn("text-sm text-slate-500", className)} {...props} />
-));
-CardDescription.displayName = "CardDescription";
-
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
+export function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("flex items-center p-6 pt-0 bg-slate-50/50 mt-auto border-t border-slate-100", className)} {...props} />;
+}

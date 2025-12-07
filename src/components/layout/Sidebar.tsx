@@ -12,7 +12,6 @@ import { MENU_ITEMS } from "@/lib/menu-config";
 import { logoutUser } from "@/app/actions/auth";
 import { toast } from "sonner";
 
-// C'est cette interface qui manque si vous avez l'erreur
 type SidebarProps = {
   user: {
     firstName: string | null;
@@ -58,7 +57,7 @@ export default function Sidebar({ user }: SidebarProps) {
                 {group.items.map((item) => {
                   const isActive = pathname === item.href;
                   const Icon = item.icon;
-                  // Cast any pour éviter les soucis de type temporaires
+                  // CORRECTION TYPE
                   const isHighlight = (item as any).highlight;
 
                   return (

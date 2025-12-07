@@ -4,17 +4,13 @@ import { Plus, Search, Filter, Building2, MapPin, Home } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { getProperties } from "@/app/data/properties"; // Vrai Loader BDD
+import { Input } from "@/components/ui/form";
+import { EmptyState } from "@/components/ui/EmptyState"; // EmptyState Pro
+import { getProperties } from "@/app/data/properties";
 import { formatCurrency } from "@/lib/utils";
-
-const TYPE_LABELS: Record<string, string> = {
-  APARTMENT: "Appartement", HOUSE: "Maison", STUDIO: "Studio",
-  OFFICE: "Bureau", RETAIL: "Commerce", WAREHOUSE: "Entrepôt",
-  INDUSTRIAL: "Industriel", LAND: "Terrain", PARKING: "Parking", BUILDING: "Immeuble", ROOM: "Chambre"
-};
+import { PROPERTY_STATUS_LABELS, PROPERTY_TYPE_LABELS } from "@/lib/constants";
 
 export default async function PropertiesPage() {
-  // 1. Chargement des vraies données (Côté Serveur)
   const properties = await getProperties();
 
   return (
@@ -27,60 +23,59 @@ export default async function PropertiesPage() {
            <p className="text-slate-500">Gérez votre inventaire ({properties.length} biens).</p>
         </div>
         <Link href="/properties/new">
-           <Button className="bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-all">
+           <Button className="bg-slate-900 text-white shadow-lg hover:bg-slate-800 transition-all">
              <Plus size={18} className="mr-2" /> Ajouter un bien
            </Button>
         </Link>
       </div>
 
-      {/* FILTRES (Visuels pour l'instant) */}
-      <div className="flex flex-col sm:flex-row gap-4">
-         <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18}/>
-            <input 
-              type="text" 
-              placeholder="Rechercher un bien..." 
-              className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm"
-            />
-         </div>
-         <Button variant="outline" className="bg-white border-slate-200 text-slate-600">
-            <Filter size={16} className="mr-2"/> Filtres
-         </Button>
-      </div>
-
-      {/* LISTE DES BIENS */}
-      {properties.length === 0 ? (
-         <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300 flex flex-col items-center justify-center">
-            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-                <Home size={32}/>
+      {/* FILTRES (Si on a des biens) */}
+      {properties.length > 0 && (
+         <div className="flex gap-4">
+            <div className="relative flex-1 max-w-sm">
+               <Input placeholder="Rechercher un bien..." icon={<Search size={18}/>} />
             </div>
-            <h3 className="text-lg font-bold text-slate-900">Aucun bien pour le moment</h3>
-            <p className="text-slate-500 mb-6 text-sm max-w-xs mx-auto">Commencez par ajouter votre premier appartement, maison ou local commercial.</p>
-            <Link href="/properties/new"><Button>Créer mon premier bien</Button></Link>
+            <Button variant="outline" className="bg-white border-slate-200 text-slate-600">
+               <Filter size={16} className="mr-2"/> Filtres
+            </Button>
          </div>
+      )}
+
+      {/* LISTE OU VIDE */}
+      {properties.length === 0 ? (
+         <EmptyState 
+            icon={Home}
+            title="Aucun bien pour le moment"
+            description="Commencez par ajouter votre premier appartement, maison ou local commercial."
+            actionLabel="Créer mon premier bien"
+            // Note: Pour un lien Link dans EmptyState, il faudrait adapter le composant ou utiliser un client component wrapper.
+            // Ici, pour faire simple, on peut laisser le bouton du header faire le travail ou wrapper.
+         />
       ) : (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {properties.map((property) => (
                <Link key={property.id} href={`/properties/${property.id}`} className="block h-full">
-                  <Card className="group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden border-slate-200 h-full flex flex-col">
+                  <Card hoverEffect className="group cursor-pointer overflow-hidden border-slate-200 h-full flex flex-col">
                      
                      {/* Image */}
                      <div className="h-48 bg-slate-100 relative flex items-center justify-center overflow-hidden">
                         {property.coverImage ? (
                            <img src={property.coverImage} alt={property.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                         ) : (
-                           <Building2 size={48} className="text-slate-300"/>
+                           <div className="text-slate-300 flex flex-col items-center">
+                              <Building2 size={48} className="mb-2 opacity-50"/>
+                              <span className="text-xs font-medium uppercase tracking-widest opacity-50">Sans image</span>
+                           </div>
                         )}
                         
-                        {/* Badges */}
                         <div className="absolute top-3 left-3">
                            <Badge className="bg-white/90 backdrop-blur text-slate-800 shadow-sm border-none font-bold">
-                              {TYPE_LABELS[property.type] || property.type}
+                              {PROPERTY_TYPE_LABELS[property.type] || property.type}
                            </Badge>
                         </div>
                         <div className="absolute top-3 right-3">
-                            <Badge className={`border-none text-white shadow-sm ${property.status === 'AVAILABLE' ? 'bg-green-500' : 'bg-blue-500'}`}>
-                               {property.status === 'AVAILABLE' ? 'Vacant' : 'Loué'}
+                            <Badge variant={property.status === 'AVAILABLE' ? 'success' : 'info'} className="shadow-sm">
+                               {PROPERTY_STATUS_LABELS[property.status] || property.status}
                             </Badge>
                         </div>
                      </div>
@@ -103,9 +98,9 @@ export default async function PropertiesPage() {
                                  {formatCurrency(property.price)}
                               </span>
                            </div>
-                           <span className={`text-xs font-medium px-2.5 py-1 rounded-md ${property.tenants.length > 0 ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>
-                              {property.tenants.length > 0 ? `${property.tenants.length} Locataire(s)` : '0 Locataire'}
-                           </span>
+                           <Badge variant="secondary" className="bg-slate-50 text-slate-500 border-slate-100">
+                              {property.tenants.length} Locataire(s)
+                           </Badge>
                         </div>
                      </CardContent>
                   </Card>

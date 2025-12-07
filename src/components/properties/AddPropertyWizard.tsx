@@ -173,7 +173,7 @@ export function AddPropertyWizard({ isOpen, onClose }: WizardProps) {
                 value={formData.address}
                 onChange={handleChange}
                 placeholder="Numéro, Rue, Quartier..."
-                leftIcon={MapPin}
+                icon={<MapPin size={18} />}
                 autoFocus
               />
             </div>
