@@ -8,20 +8,29 @@ import { createSafeAction, actionResult } from "@/lib/safe-action";
 const ExpenseSchema = z.object({
   title: z.string().min(2, "Titre requis"),
   amount: z.coerce.number().positive("Montant invalide"),
-  date: z.string(), // Date de la dépense
+  date: z.string(),
   category: z.enum(["MAINTENANCE", "UTILITIES", "TAX", "MANAGEMENT", "LOAN", "OTHER"]),
   propertyId: z.string().min(1, "Bien requis"),
-  isRecoverable: z.boolean().optional(), // Est-ce refacturable au locataire ?
-  receiptUrl: z.string().optional().nullable(), // Photo du ticket
+  isRecoverable: z.boolean().optional(),
+  receiptUrl: z.string().optional().nullable(),
 });
 
 export const createExpense = createSafeAction(
   ExpenseSchema,
   async ({ userId }, data) => {
     
-    // 1. Sécurité : Le bien appartient-il au manager ?
-    const property = await db.property.findUnique({
-      where: { id: data.propertyId, managerId: userId }
+    // 👇 CORRECTION 1 : Vérification que userId existe (Type Guard)
+    if (!userId) {
+      return actionResult.error("Utilisateur non identifié.");
+    }
+
+    // 👇 CORRECTION 2 : Utilisation de findFirst (au lieu de findUnique)
+    // findFirst permet de filtrer sur plusieurs champs (ID du bien + ID du manager)
+    const property = await db.property.findFirst({
+      where: { 
+        id: data.propertyId, 
+        managerId: userId // TypeScript sait maintenant que c'est un string
+      }
     });
 
     if (!property) return actionResult.error("Bien introuvable ou accès interdit.");
@@ -41,8 +50,8 @@ export const createExpense = createSafeAction(
 
     // 3. Refresh
     revalidatePath("/expenses");
-    revalidatePath("/dashboard"); // Pour mettre à jour le graphique Flux
-    revalidatePath("/reports");   // Pour les bilans
+    revalidatePath("/dashboard");
+    revalidatePath("/reports");
 
     return actionResult.success("Dépense enregistrée.");
   },

@@ -66,6 +66,12 @@ const PropertySchema = z.object({
 export const createProperty = createSafeAction(
   PropertySchema,
   async ({ userId }, data) => {
+    
+    // 👇 CORRECTION CRITIQUE : Vérification obligatoire
+    if (!userId) {
+      return actionResult.error("Utilisateur non identifié.");
+    }
+
     const base = slugify(data.title);
     const slug = `${base}-${Date.now().toString().slice(-4)}`;
 
@@ -73,7 +79,7 @@ export const createProperty = createSafeAction(
       data: {
         ...data,
         slug,
-        managerId: userId,
+        managerId: userId, // TypeScript sait maintenant que userId est une string valide
         currency: "XOF",
         status: "AVAILABLE",
         images: data.coverImage ? [data.coverImage] : [],
@@ -104,6 +110,11 @@ export const updateProperty = createSafeAction(
   UpdatePropertySchema,
   async ({ userId }, data) => {
 
+    // 👇 CORRECTION CRITIQUE
+    if (!userId) {
+      return actionResult.error("Utilisateur non identifié.");
+    }
+
     // 1. Sécurité de base
     if (data.id === data.parentId) {
       return actionResult.error("Un bien ne peut pas être lié à lui-même.");
@@ -113,7 +124,7 @@ export const updateProperty = createSafeAction(
     if (data.parentId) {
        const cycleDetected = await isDescendant(data.parentId, data.id);
        if (cycleDetected) {
-          return actionResult.error("Impossible : Ce changement créerait une boucle infinie (l'enfant deviendrait le parent de son parent).");
+          return actionResult.error("Impossible : Ce changement créerait une boucle infinie.");
        }
     }
 
@@ -161,6 +172,11 @@ const DeletePropertySchema = z.object({
 export const deleteProperty = createSafeAction(
   DeletePropertySchema,
   async ({ userId }, { id }) => {
+
+    // 👇 CORRECTION CRITIQUE
+    if (!userId) {
+      return actionResult.error("Utilisateur non identifié.");
+    }
 
     // Anti-orphelins
     const children = await db.property.count({

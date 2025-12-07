@@ -2,54 +2,69 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "secondary" | "outline" | "success" | "warning" | "danger" | "auto"; // Ajout de "auto"
+  variant?: "default" | "secondary" | "outline" | "success" | "warning" | "danger" | "info" | "brand" | "auto";
+  size?: "sm" | "md"; // Ajout de la prop size
+  dot?: boolean;
 }
 
-// Dictionnaire d'intelligence
-const STATUS_COLORS: Record<string, string> = {
+const STATUS_CONFIG: Record<string, { color: string; dot: string }> = {
   // Positif
-  "Payé": "bg-green-100 text-green-700 border-green-200",
-  "À jour": "bg-green-100 text-green-700 border-green-200",
-  "Loué": "bg-green-100 text-green-700 border-green-200",
-  "Signé": "bg-green-100 text-green-700 border-green-200",
-  "Validé": "bg-green-100 text-green-700 border-green-200",
+  "Payé": { color: "bg-green-50 text-green-700 border-green-200 ring-green-600/20", dot: "bg-green-500" },
+  "À jour": { color: "bg-emerald-50 text-emerald-700 border-emerald-200 ring-emerald-600/20", dot: "bg-emerald-500" },
+  "Loué": { color: "bg-blue-50 text-blue-700 border-blue-200 ring-blue-600/20", dot: "bg-blue-500" },
   
   // Attention
-  "En attente": "bg-orange-100 text-orange-700 border-orange-200",
-  "Travaux": "bg-orange-100 text-orange-700 border-orange-200",
-  "Retard": "bg-orange-100 text-orange-700 border-orange-200",
+  "En attente": { color: "bg-amber-50 text-amber-700 border-amber-200 ring-amber-600/20", dot: "bg-amber-500 animate-pulse" },
+  "Retard": { color: "bg-rose-50 text-rose-700 border-rose-200 ring-rose-600/20", dot: "bg-rose-500 animate-pulse" },
+  "Partiel": { color: "bg-yellow-50 text-yellow-700 border-yellow-200 ring-yellow-600/20", dot: "bg-yellow-500" },
   
   // Critique
-  "Impayé": "bg-red-100 text-red-700 border-red-200",
-  "Exprié": "bg-red-100 text-red-700 border-red-200",
-  "Urgent": "bg-red-100 text-red-700 border-red-200",
-  "Vacant": "bg-slate-100 text-slate-600 border-slate-200",
+  "Impayé": { color: "bg-red-50 text-red-700 border-red-200 ring-red-600/20", dot: "bg-red-500" },
 };
 
-function Badge({ className, variant = "default", children, ...props }: BadgeProps) {
+function Badge({ className, variant = "default", size = "md", dot = false, children, ...props }: BadgeProps) {
   let computedClass = "";
+  let dotColor = "";
 
-  // Si variant est "auto", le composant décide de la couleur selon le texte
   if (variant === "auto" && typeof children === "string") {
-    // On cherche si le texte contient un mot clé (ex: "En retard (J+5)" -> contient "Retard")
-    const key = Object.keys(STATUS_COLORS).find(k => children.includes(k));
-    computedClass = key ? STATUS_COLORS[key] : "bg-slate-100 text-slate-700";
+    const key = Object.keys(STATUS_CONFIG).find(k => children.includes(k));
+    if (key) {
+      computedClass = STATUS_CONFIG[key].color;
+      dotColor = STATUS_CONFIG[key].dot;
+    } else {
+      computedClass = "bg-slate-100 text-slate-700 border-slate-200";
+      dotColor = "bg-slate-400";
+    }
   } else {
-    // Logique standard
     const variants = {
-      default: "border-transparent bg-blue-600 text-white hover:bg-blue-700",
-      secondary: "border-transparent bg-slate-100 text-slate-900",
-      outline: "text-slate-900 border-slate-200",
-      success: "border-transparent bg-green-100 text-green-700",
-      warning: "border-transparent bg-orange-100 text-orange-700",
-      danger: "border-transparent bg-red-100 text-red-700",
-      auto: "", 
+      default: "bg-slate-900 text-white border-transparent shadow-sm",
+      secondary: "bg-slate-100 text-slate-900 border-slate-200",
+      outline: "bg-transparent text-slate-900 border-slate-200",
+      success: "bg-green-50 text-green-700 border-green-200",
+      warning: "bg-amber-50 text-amber-700 border-amber-200",
+      danger: "bg-red-50 text-red-700 border-red-200",
+      info: "bg-blue-50 text-blue-700 border-blue-200", // Ajout de la variante info
+      brand: "bg-blue-600 text-white border-transparent shadow-sm shadow-blue-500/30",
+      auto: "",
     };
     computedClass = variants[variant];
   }
 
+  const sizes = {
+    sm: "px-2 py-0.5 text-[10px]",
+    md: "px-2.5 py-0.5 text-xs",
+  };
+
   return (
-    <div className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors", computedClass, className)} {...props}>
+    <div className={cn(
+      "inline-flex items-center gap-1.5 rounded-full border font-semibold transition-all duration-300",
+      sizes[size], // Application de la taille
+      computedClass,
+      className
+    )} {...props}>
+      {(dot || variant === "auto") && dotColor && (
+        <span className={cn("w-1.5 h-1.5 rounded-full", dotColor)} />
+      )}
       {children}
     </div>
   );
